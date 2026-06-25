@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brain-Score Vision · Metrics</title>
+<style>
+  :root{
+    --bg:#ffffff; --panel:#ffffff; --panel2:#f7f7f3; --ink:#1f2328; --muted:#5f6873;
+    --line:#e4e4dd; --in:#9aa0a6;
+    --neural:#2f7d72; --rsa:#6a5a99; --behavior:#a8702f; --property:#3f7a52; --ceiling:#566776;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.7 Georgia,"Iowan Old Style",Palatino,"Times New Roman",serif}
+  a{color:inherit}
+  .wrap{max-width:1180px;margin:0 auto;padding:38px 22px 80px}
+  header h1{font-size:30px;margin:0 0 6px;letter-spacing:-.4px}
+  header .sub{color:var(--muted);font-size:16px;margin:0 0 22px}
+  .lede{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:0 0 14px}
+  .lede p{margin:0 0 8px}
+  .lede p:last-child{margin:0}
+  .lede code{background:#f2f2ec;padding:2px 6px;border-radius:5px;color:#2a6a64;font-size:13px}
+  .axes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 26px}
+  @media(max-width:720px){.axes{grid-template-columns:1fr}}
+  .axis{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--neural);border-radius:10px;padding:12px 15px}
+  .axis:nth-child(2){border-left-color:var(--behavior)}
+  .axis h4{margin:0 0 4px;font-size:14px}
+  .axis p{margin:0;color:var(--muted);font-size:13px}
+
+  .filters{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 26px;position:sticky;top:0;
+    background:linear-gradient(var(--bg),var(--bg) 70%,transparent);padding:10px 0;z-index:5}
+  .chip{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--muted);
+    padding:6px 13px;border-radius:999px;font-size:13px;user-select:none;transition:.15s}
+  .chip:hover{color:var(--ink)}
+  .chip.active{color:#fff;font-weight:600}
+  .chip[data-f="all"].active{background:var(--ink);border-color:var(--ink)}
+  .chip[data-f="neural"].active{background:var(--neural);border-color:var(--neural)}
+  .chip[data-f="rsa"].active{background:var(--rsa);border-color:var(--rsa)}
+  .chip[data-f="behavior"].active{background:var(--behavior);border-color:var(--behavior)}
+  .chip[data-f="property"].active{background:var(--property);border-color:var(--property)}
+  .chip[data-f="ceiling"].active{background:var(--ceiling);border-color:var(--ceiling)}
+
+  .fam{margin:0 0 60px}
+  .fam-head{display:flex;align-items:baseline;gap:12px;margin:0 0 4px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .fam-head h2{margin:0;font-size:20px}
+  .fam-head .q{color:var(--muted);font-size:14px;font-style:italic}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 22px;margin:30px 0;
+    border-top:3px solid var(--accent)}
+  .fam-head{margin-bottom:22px}
+  .card-head{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 14px}
+  .card-head h3{margin:0;font-size:18px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .reg{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);background:#f4f4ee;
+    border:1px solid var(--line);padding:2px 8px;border-radius:6px}
+  .tag{margin-left:auto;font-size:12px;color:var(--accent);border:1px solid var(--accent);
+    padding:2px 9px;border-radius:999px;opacity:.9}
+
+  .pipe{display:grid;grid-template-columns:1fr 26px 1.5fr 26px 1.1fr;gap:0;align-items:stretch}
+  @media(max-width:780px){.pipe{grid-template-columns:1fr;gap:8px}.pipe .arrow{display:none}}
+  .stage{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .stage .lab{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--in);margin:0 0 6px;font-weight:600}
+  .stage .body{font-size:13.5px;color:var(--ink)}
+  .stage .body code{background:#eef0ec;padding:1px 5px;border-radius:4px;font-size:12px;color:#2a6a64}
+  .arrow{display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:20px}
+  .svgwrap{margin:2px 0 9px;background:#fbfbf8;border:1px solid var(--line);border-radius:8px;padding:6px;display:flex;justify-content:center}
+  .svgwrap svg{width:100%;height:auto;max-height:96px}
+
+  .outbar{margin:2px 0 8px}
+  .track{height:8px;border-radius:6px;background:linear-gradient(90deg,#ececde,var(--accent));position:relative;opacity:.85}
+  .scale{display:flex;justify-content:space-between;font-size:10.5px;color:var(--in);margin-top:3px}
+  .stat{font-size:12.5px;color:var(--accent);font-weight:600;margin-top:5px}
+
+  .tells{margin:14px 0 0;background:#fafaf6;border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:8px;padding:11px 14px;font-size:13.5px}
+  .tells b{color:var(--accent)}
+
+  footer{color:var(--in);font-size:12.5px;border-top:1px solid var(--line);padding-top:16px;margin-top:30px}
+  /* svg shared */
+  svg .ax{stroke:#cfcfc6;stroke-width:1}
+  svg .mut{fill:#a7a79c}
+  svg text{font:9px ui-monospace,monospace;fill:#7b7b72}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Brain-Score Vision — the Metrics</h1>
+  <p class="sub">Every scoring metric in <code style="font-size:14px">brainscore_vision</code>: its inputs, what it statistically does, its output, and what a high score says about brain-likeness.</p>
+</header>
+
+<div class="lede">
+  <p>A Brain-Score metric is just a function <code>metric(model_output, brain_data) → Score in [0,1]</code>. Each benchmark pairs a stimulus set + a brain/behavioral recording with <b>one</b> metric — so <b>the metric is the operational definition of "brain-like"</b> for that benchmark.</p>
+  <p><b>Reading a score:</b> raw output ÷ <b>ceiling</b> (the same metric run on the data against itself). <b>1.0 means "as good as the data's own reliability allows," not "perfect."</b> Almost everything is cross-validated: fit on 90% of stimuli, score the held-out 10%, repeat, take the median.</p>
+</div>
+
+<div class="axes">
+  <div class="axis">
+    <h4>First-order vs second-order</h4>
+    <p>Predictivity asks "can a linear readout recover the responses?" (needs a fit, rewards extractable information). RDM/CKA ask "is the relational <i>geometry</i> the same?" (no fit, invariant to rotation, blind to fit-recoverable info).</p>
+  </div>
+  <div class="axis">
+    <h4>Performance vs strategy</h4>
+    <p>Behavioral metrics form a ladder: matching <i>accuracy</i> &lt; matching accuracy per condition &lt; getting the <i>same images</i> right/wrong &lt; matching the full confusion pattern. Higher rungs match the strategy, not just the score.</p>
+  </div>
+</div>
+
+<div class="filters" id="filters">
+  <span class="chip active" data-f="all">All</span>
+  <span class="chip" data-f="neural"><span class="dot" style="background:var(--neural)"></span> Neural predictivity</span>
+  <span class="chip" data-f="rsa"><span class="dot" style="background:var(--rsa)"></span> Representational similarity</span>
+  <span class="chip" data-f="behavior"><span class="dot" style="background:var(--behavior)"></span> Behavioral</span>
+  <span class="chip" data-f="property"><span class="dot" style="background:var(--property)"></span> Distribution / property</span>
+  <span class="chip" data-f="ceiling"><span class="dot" style="background:var(--ceiling)"></span> Ceilings</span>
+</div>
+
+<div id="content"></div>
+
+<footer>
+  Generated from <code>vision/brainscore_vision/metrics/</code> · ranges shown are typical; nearly all scores are ceiling-normalized to [0,1].
+  Companion notes: <code>Brain-Score Metrics.md</code> and the per-family notes in this folder.
+</footer>
+</div>
+
+<script>
+/* ---------- inline SVG glyphs (schematic, accent-colored) ---------- */
+const A='var(--accent)';
+const G={
+ pls:`<svg viewBox="0 0 200 90"><g class="mut">
+   ${pts(18,16,3)}</g><g style="fill:${A}">${pts(150,16,3)}</g>
+   <line class="ax" x1="70" y1="45" x2="118" y2="45"/><polygon points="118,40 130,45 118,50" fill="${A}"/>
+   <line x1="150" y1="20" x2="186" y2="68" stroke="${A}" stroke-width="2"/>
+   <text x="20" y="86">model features</text><text x="150" y="86">neuron responses</text>
+   <text x="74" y="40">linear fit (25 PLS dims)</text></svg>`,
+ reverse:`<svg viewBox="0 0 200 90"><g style="fill:${A}">${pts(18,16,3)}</g><g class="mut">${pts(150,16,3)}</g>
+   <line class="ax" x1="118" y1="45" x2="70" y2="45"/><polygon points="82,40 70,45 82,50" fill="${A}"/>
+   <text x="20" y="86">model features</text><text x="150" y="86">neuron responses</text>
+   <text x="72" y="40">predict model ← brain</text></svg>`,
+ ridge:`<svg viewBox="0 0 200 90">${scatter()}
+   <line x1="20" y1="70" x2="180" y2="26" stroke="${A}" stroke-width="2.5"/>
+   <line x1="20" y1="70" x2="180" y2="40" stroke="${A}" stroke-width="1" stroke-dasharray="3 3"/>
+   <text x="120" y="74">L2 shrinks the slope (α)</text></svg>`,
+ ols:`<svg viewBox="0 0 200 90">${scatter()}
+   <line x1="20" y1="72" x2="180" y2="20" stroke="${A}" stroke-width="2.5"/>
+   <text x="120" y="80">unregularized fit</text></svg>`,
+ n2n:`<svg viewBox="0 0 200 90"><g class="mut">${col(40)}</g><g style="fill:${A}">${col(160)}</g>
+   <line x1="48" y1="20" x2="152" y2="55" stroke="${A}" stroke-width="1.5"/>
+   <line x1="48" y1="40" x2="152" y2="20" stroke="${A}" stroke-width="1.5"/>
+   <line x1="48" y1="60" x2="152" y2="72" stroke="${A}" stroke-width="1.5"/>
+   <text x="20" y="86">model units</text><text x="150" y="86">neurons</text>
+   <text x="64" y="12">best-match (1:1)</text></svg>`,
+ mask:`<svg viewBox="0 0 200 90"><rect x="20" y="14" width="64" height="64" fill="none" class="ax"/>
+   <circle cx="52" cy="46" r="20" fill="${A}" opacity=".22"/><circle cx="52" cy="46" r="11" fill="${A}" opacity=".5"/>
+   <line class="ax" x1="92" y1="46" x2="120" y2="46"/><polygon points="120,41 132,46 120,51" fill="${A}"/>
+   <circle cx="160" cy="46" r="9" fill="${A}"/><text x="20" y="90">smooth spatial mask × channel pool</text></svg>`,
+ time:`<svg viewBox="0 0 200 90"><line class="ax" x1="20" y1="70" x2="186" y2="70"/>
+   ${[0,1,2,3,4].map(i=>`<line class="ax" x1="${30+i*36}" y1="66" x2="${30+i*36}" y2="74"/>`).join('')}
+   <path d="M20,55 Q60,20 100,45 T180,35" fill="none" stroke="${A}" stroke-width="2"/>
+   <text x="60" y="88">predict response per time-bin</text></svg>`,
+ rdm:`<svg viewBox="0 0 200 90">${grid(16,16,6)}<g transform="translate(120,0)">${grid(16,16,6,true)}</g>
+   <text x="22" y="88">brain RDM</text><text x="138" y="88">model RDM</text>
+   <text x="78" y="46" style="fill:${A}">⤳ ρ</text></svg>`,
+ cka:`<svg viewBox="0 0 200 90">${grid(18,12,5)}<g transform="translate(118,0)">${grid(18,12,5,true)}</g>
+   <text x="20" y="88">Gram K</text><text x="138" y="88">Gram L</text>
+   <text x="74" y="46" style="fill:${A}">HSIC</text></svg>`,
+ acc:`<svg viewBox="0 0 200 90"><g font-size="20">
+   ${'✓✗✓✓✗'.split('').map((c,i)=>`<text x="${24+i*30}" y="40" style="fill:${c==='✓'?A:'#5b6675'};font-size:18px">${c}</text>`).join('')}
+   ${'✓✗✓✗✗'.split('').map((c,i)=>`<text x="${24+i*30}" y="68" style="fill:${c==='✓'?A:'#5b6675'};font-size:18px">${c}</text>`).join('')}
+   </g><text x="150" y="40">model</text><text x="150" y="68">human</text>
+   <text x="20" y="86">fraction correct match</text></svg>`,
+ accdist:`<svg viewBox="0 0 200 90"><line class="ax" x1="24" y1="70" x2="24" y2="14"/><line class="ax" x1="24" y1="70" x2="186" y2="70"/>
+   ${bar(40,.55,A)}${bar(70,.85,'#5b6675')}${bar(120,.4,A)}${bar(150,.45,'#5b6675')}
+   <text x="34" y="86">|acc_model − acc_human| per condition</text></svg>`,
+ kappa:`<svg viewBox="0 0 200 90">
+   <rect x="40" y="16" width="56" height="56" fill="none" class="ax"/>
+   <line class="ax" x1="68" y1="16" x2="68" y2="72"/><line class="ax" x1="40" y1="44" x2="96" y2="44"/>
+   <rect x="40" y="16" width="28" height="28" fill="${A}" opacity=".55"/><rect x="68" y="44" width="28" height="28" fill="${A}" opacity=".55"/>
+   <rect x="68" y="16" width="28" height="28" fill="#5b6675" opacity=".35"/><rect x="40" y="44" width="28" height="28" fill="#5b6675" opacity=".35"/>
+   <text x="108" y="34">agree (both ✓ / both ✗)</text><text x="108" y="58" style="fill:${A}">κ above chance</text>
+   <text x="40" y="86">human × model, per image</text></svg>`,
+ matrix:`<svg viewBox="0 0 200 90">${grid(14,18,5)}<text x="20" y="86">d′ per (image × distractor)</text>
+   <line class="ax" x1="110" y1="40" x2="138" y2="40"/><polygon points="138,35 150,40 138,45" fill="${A}"/>
+   <text x="156" y="44" style="fill:${A}">ρ</text></svg>`,
+ delta:`<svg viewBox="0 0 200 90"><line class="ax" x1="24" y1="70" x2="186" y2="70"/>
+   ${bar(50,.8,'#5b6675')}${bar(82,.4,'#5b6675')}<text x="40" y="86">whole vs broken (human Δ)</text>
+   ${bar(140,.75,A)}${bar(168,.5,A)}<path d="M58,18 L90,40" stroke="#5b6675" stroke-width="1.5"/>
+   <text x="120" y="20" style="fill:${A}">match the drop Δ</text></svg>`,
+ psy:`<svg viewBox="0 0 200 90"><line class="ax" x1="24" y1="70" x2="186" y2="70"/><line class="ax" x1="24" y1="70" x2="24" y2="14"/>
+   <path d="M24,68 C70,66 90,30 130,22 S180,18 184,17" fill="none" stroke="${A}" stroke-width="2"/>
+   <line x1="92" y1="70" x2="92" y2="44" stroke="${A}" stroke-dasharray="3 3"/><circle cx="92" cy="44" r="3" fill="${A}"/>
+   <text x="78" y="84">threshold</text><text x="120" y="60">stimulus level →</text></svg>`,
+ valuedelta:`<svg viewBox="0 0 200 90"><line class="ax" x1="24" y1="50" x2="186" y2="50"/>
+   <circle cx="80" cy="50" r="5" fill="${A}"/><circle cx="128" cy="50" r="5" fill="#5b6675"/>
+   <line x1="80" y1="50" x2="128" y2="50" stroke="${A}" stroke-width="1.5" stroke-dasharray="2 2"/>
+   <text x="64" y="40" style="fill:${A}">model</text><text x="112" y="40">target</text>
+   <text x="40" y="78">score = 1 / exp(|Δ|)</text></svg>`,
+ ost:`<svg viewBox="0 0 200 90"><line class="ax" x1="24" y1="70" x2="186" y2="70"/><line class="ax" x1="24" y1="20" x2="186" y2="20" stroke-dasharray="3 3"/>
+   <path d="M24,66 Q70,60 96,20" fill="none" stroke="${A}" stroke-width="2"/>
+   <path d="M24,68 Q110,64 150,20" fill="none" stroke="#5b6675" stroke-width="2"/>
+   <circle cx="96" cy="20" r="3" fill="${A}"/><circle cx="150" cy="20" r="3" fill="#5b6675"/>
+   <text x="120" y="84">solution time (threshold crossing)</text></svg>`,
+ confusion:`<svg viewBox="0 0 200 90">${grid(16,16,6)}<g transform="translate(118,0)">${grid(16,16,6,true)}</g>
+   <text x="14" y="88">human confusions</text><text x="130" y="88">model confusions</text></svg>`,
+ ks:`<svg viewBox="0 0 200 90"><line class="ax" x1="24" y1="70" x2="186" y2="70"/><line class="ax" x1="24" y1="70" x2="24" y2="14"/>
+   <path d="M24,70 C70,68 90,40 120,30 S180,16 184,15" fill="none" stroke="#5b6675" stroke-width="2"/>
+   <path d="M24,70 C60,66 84,52 116,46 S180,20 184,18" fill="none" stroke="${A}" stroke-width="2"/>
+   <line x1="118" y1="31" x2="118" y2="46" stroke="#444" stroke-width="1.5"/>
+   <text x="124" y="42" style="fill:${A}">KS gap</text><text x="40" y="86">CDF of a tuning property</text></svg>`,
+ dim:`<svg viewBox="0 0 200 90"><line class="ax" x1="24" y1="70" x2="186" y2="70"/>
+   ${bar(46,.85,A)}${bar(86,.5,A)}${bar(126,.3,A)}${bar(160,.15,A)}
+   <text x="34" y="86">fraction of dims per factor (softmax)</text></svg>`,
+ splithalf:`<svg viewBox="0 0 200 90"><g class="mut">${pts(20,18,3,5)}</g><g style="fill:${A}">${pts(120,18,3,5)}</g>
+   <line class="ax" x1="72" y1="45" x2="108" y2="45"/><text x="74" y="40" style="fill:${A}">corr halves</text>
+   <text x="16" y="88">reps half A</text><text x="118" y="88">reps half B</text>
+   <text x="40" y="14">Spearman-Brown ×</text></svg>`,
+ subjects:`<svg viewBox="0 0 200 90">${grid(13,13,5)}<g transform="translate(70,0)">${grid(13,13,5,true)}</g><g transform="translate(140,0)">${grid(13,13,5)}</g>
+   <text x="14" y="86">each subject RDM vs mean of others</text></svg>`
+};
+function pts(x,y,r,n=6){let s='';const xs=[0,30,12,42,22,8,36],ys=[0,18,30,8,42,50,24];for(let i=0;i<n;i++)s+=`<circle cx="${x+xs[i%7]}" cy="${y+ys[i%7]}" r="${r}"/>`;return s;}
+function col(x){let s='';for(let i=0;i<3;i++)s+=`<circle cx="${x}" cy="${20+i*20}" r="6"/>`;return s;}
+function scatter(){let s='<g class="mut">';const X=[30,55,70,95,120,150,170,45,85,135],Y=[64,58,52,46,40,30,24,60,48,34];for(let i=0;i<X.length;i++)s+=`<circle cx="${X[i]}" cy="${Y[i]+(i%2?4:-4)}" r="3"/>`;return s+'</g>';}
+function grid(x,y,c,accent){let s='';for(let i=0;i<c;i++)for(let j=0;j<c;j++){const v=((i*7+j*3)%5)/5;const col=accent?`rgba(183,139,255,${.2+v*.7})`:`rgba(120,135,150,${.15+v*.6})`;s+=`<rect x="${x+i*9}" y="${y+j*9}" width="8" height="8" fill="${col}"/>`;}return s;}
+function bar(x,h,c){const H=h*48;return `<rect x="${x}" y="${70-H}" width="20" height="${H}" fill="${c}" opacity=".8"/>`;}
+
+/* ---------- families ---------- */
+const FAM={
+ neural:{label:'Neural predictivity',color:'var(--neural)',q:'Can a linear readout of model features reproduce each neuron’s response?'},
+ rsa:{label:'Representational similarity',color:'var(--rsa)',q:'Do model and brain organize stimuli into the same geometry?'},
+ behavior:{label:'Behavioral',color:'var(--behavior)',q:'Does the model make the same choices, errors and confusions as humans & primates?'},
+ property:{label:'Distribution / property',color:'var(--property)',q:'Do model units show the same tuning-property distributions as a cortical area?'},
+ ceiling:{label:'Ceilings (the denominator)',color:'var(--ceiling)',q:'How much signal is even explainable given measurement noise?'}
+};
+
+/* ---------- metric data ---------- */
+const M=[
+ {f:'neural',n:'pls / pls_cv',reg:['pls','pls_cv'],g:'pls',
+  in:'model activations <code>stim×feat</code> + neural responses <code>stim×neurons</code>',
+  does:'PLS regression with <b>25 components</b> finds latent directions that covary with the responses, maps them to neurons; cross-validated.',
+  out:'Pearson r per neuron, median', range:['0','1 = ceiling'],
+  tells:'The workhorse for V1–IT predictivity. High = model features <b>linearly contain</b> the brain’s image-driven information. Forgiving of rotation, scale, unit mixing.'},
+ {f:'neural',n:'ridge',reg:['ridge','ridge_cv'],g:'ridge',
+  in:'same as PLS',
+  does:'L2-regularized linear regression, <b>fixed α=1</b>, keeping all feature dims (shrunk) instead of 25 latents.',
+  out:'Pearson r per neuron, median',range:['0','1 = ceiling'],
+  tells:'Same linear-predictivity claim as PLS but sensitive to how information spreads across <i>all</i> dimensions. The fixed α=1 is an arbitrary prior.'},
+ {f:'neural',n:'ridge_cv (RidgeCV)',reg:['ridgecv_split'],g:'ridge',
+  in:'same as PLS',
+  does:'Ridge whose <b>α is chosen by cross-validation</b> from a 95-value grid (0.01→1e7); selected α stored in <code>attrs</code>.',
+  out:'Pearson r per neuron, median',range:['0','1 = ceiling'],
+  tells:'The most honest ridge predictivity — not penalized by an arbitrary α. A large selected α is itself diagnostic: features needed heavy shrinkage to generalize.'},
+ {f:'neural',n:'linear_predictivity',reg:['linear_predictivity_cv'],g:'ols',
+  in:'same as PLS',
+  does:'Ordinary least squares, <b>no regularization</b>.',
+  out:'Pearson r per neuron, median',range:['0','1 = ceiling'],
+  tells:'Only meaningful when features &lt; stimuli; otherwise overfits. A baseline for low-dimensional representations.'},
+ {f:'neural',n:'reverse_pls',reg:['reverse_pls','reverse_pls_cv'],g:'reverse',
+  in:'same inputs, <b>roles swapped</b>',
+  does:'Predicts <b>model features from neural responses</b> (the PLS pipeline run backwards).',
+  out:'Pearson r per feature, median',range:['0','1 = ceiling'],
+  tells:'“Does the brain contain enough to reconstruct the model?” Read with forward PLS it exposes <b>asymmetry</b> — and empirically anchors the precision pole that separates from the general forward factor.'},
+ {f:'neural',n:'neuron_to_neuron',reg:['neuron_to_neuron'],g:'n2n',
+  in:'same as PLS',
+  does:'For each neuron, use only its <b>single best-correlated model unit</b> (argmax Pearson) — no feature mixing.',
+  out:'Pearson r per neuron, median',range:['0','1 = ceiling'],
+  tells:'A far stricter correspondence: are <i>individual units</i> aligned, not just population subspaces? Scores are usually much lower; high = literal unit-level match.'},
+ {f:'neural',n:'mask_regression',reg:['mask_regression'],g:'mask',
+  in:'spatial feature maps + neural responses',
+  does:'Factorized readout = smooth <b>spatial RF mask</b> × channel pooling, with Laplacian smoothness; gradient-fit (Klindt 2017).',
+  out:'Pearson r per neuron, median',range:['0','1 = ceiling'],
+  tells:'Biologically-constrained predictivity: can neurons be read out by a <i>localized, smooth</i> receptive field? Supports retinotopic/RF-like structure.'},
+ {f:'neural',n:'spantime_pls / spantime_ridge',reg:['spantime_pls'],g:'time',
+  in:'time-resolved neural recordings',
+  does:'Same regression wrapped to treat <b>time as a sample dimension</b>, scored per time-bin.',
+  out:'Pearson r per time-bin',range:['0','1 = ceiling'],
+  tells:'Predictivity of <b>temporal response dynamics</b>, not just the static response.'},
+
+ {f:'rsa',n:'rdm / rdm_cv',reg:['rdm','rdm_cv'],g:'rdm',
+  in:'two <code>stim×neuroid</code> assemblies, aligned by stimulus',
+  does:'Build each <b>stimulus×stimulus dissimilarity</b> matrix (<code>1 − corr</code>), take upper triangles, <b>Spearman-correlate</b> them (Kriegeskorte 2008).',
+  out:'Spearman ρ of RDM triangles',range:['−1','+1'],
+  tells:'Do model & brain agree on the <b>relative similarity</b> of stimuli? No fitting, invariant to rotation & unit identity — the natural metric for multi-subject fMRI. Forward-leaning.'},
+ {f:'rsa',n:'cka',reg:['cka','cka_biased'],g:'cka',
+  in:'two <code>stim×neuroid</code> assemblies',
+  does:'Centered linear <b>Gram matrices</b>; normalized HSIC: <code>CKA = HSIC(K,L)/√(HSIC(K,K)·HSIC(L,L))</code>.',
+  out:'CKA, already in [0,1]',range:['0','1'],
+  tells:'Fit-free geometry match like RDM but on inner products — more sensitive to <i>which</i> directions carry variance. The ML-standard representation-similarity measure.'},
+
+ {f:'behavior',n:'accuracy',reg:['accuracy'],g:'acc',
+  in:'model choices, ground truth',
+  does:'<code>mean(source == target)</code>.',
+  out:'fraction correct',range:['0','1'],
+  tells:'The coarsest signal — same fraction right, nothing about <i>which</i> images. A building block.'},
+ {f:'behavior',n:'accuracy_distance',reg:['accuracy_distance'],g:'accdist',
+  in:'model vs human choices, per condition',
+  does:'<code>1 − |acc_m − acc_h| / max(acc_h, 1−acc_h)</code> per condition, averaged over subjects.',
+  out:'normalized accuracy match',range:['0','1'],
+  tells:'Rewards matching the human <b>level</b> of accuracy per condition — too accurate loses too. Behavioral realism, not raw skill.'},
+ {f:'behavior',n:'error_consistency',reg:['error_consistency'],g:'kappa',
+  in:'model vs human correctness, per image',
+  does:'<b>Cohen’s κ</b> = (observed − expected agreement)/(1 − expected), subtracting chance agreement given each side’s accuracy (Geirhos 2020).',
+  out:'Cohen’s κ',range:['0','1'],
+  tells:'The strongest single-number behavioral claim: same <b>individual images</b> right/wrong <i>beyond</i> what accuracies predict. Two systems can share accuracy with κ=0.'},
+ {f:'behavior',n:'i1 / i2n',reg:['i1','i2n'],g:'matrix',
+  in:'model choice probabilities, primate choices',
+  does:'Convert to <b>d′</b>; <code>i2n</code> keeps each (target, distractor) pair, normalizes, then Pearson-correlates the d′ matrices (Rajalingham 2018).',
+  out:'Pearson ρ of d′ matrices',range:['−1','+1'],
+  tells:'The finest-grained behavioral match. <code>i2n</code> is the flagship core-object-recognition metric: same <i>specific</i> images & object confusions hard, after removing each object’s difficulty.'},
+ {f:'behavior',n:'baker_accuracy_delta',reg:['baker_accuracy_delta'],g:'delta',
+  in:'model & human accuracy in two conditions',
+  does:'Match the <b>accuracy difference</b> between conditions: <code>1 − |Δ_h − Δ_m|/Δ_h</code>, over 100 subject splits.',
+  out:'normalized Δ match',range:['0','1'],
+  tells:'Targets one <b>specific effect</b> (e.g. whole vs fragmented) controlling for absolute accuracy — diagnostic of configural/holistic processing.'},
+ {f:'behavior',n:'threshold / threshold_elevation',reg:['threshold'],g:'psy',
+  in:'model accuracy-vs-stimulus-level curve',
+  does:'Fit a <b>cumulative-Gaussian psychometric function</b>, read off the perceptual threshold, compare to human: <code>1 − |Δthr|/thr_h</code>.',
+  out:'normalized threshold match',range:['0','1'],
+  tells:'Does the model’s <b>sensitivity</b> match human sensitivity — the contrast/SF/noise level at which it can just do the task? A psychophysics match.'},
+ {f:'behavior',n:'value_delta',reg:['value_delta'],g:'valuedelta',
+  in:'two scalar summaries (e.g. reaction time)',
+  does:'<code>score = 1 / exp(scale·|s − t|)</code>, clipped to [0,1].',
+  out:'closeness of two numbers',range:['0','1'],
+  tells:'A generic “how close are these two values” comparator for benchmarks that reduce to a <b>single number</b>. Meaning set by what the number is.'},
+ {f:'behavior',n:'ost',reg:['ost'],g:'ost',
+  in:'time-series neural decode + primate OSTs',
+  does:'Find <b>when</b> each image’s decode crosses a difficulty threshold (object solution time), Spearman-correlate vs primate OSTs (Kar 2019).',
+  out:'Spearman ρ of solution times',range:['−1','+1'],
+  tells:'Tests <b>temporal dynamics</b>: same images quick vs slow to resolve as IT cortex over processing time.'},
+ {f:'behavior',n:'confusion_similarity / tasks_consistency',reg:['confusion_similarity','tasks_consistency'],g:'confusion',
+  in:'model probabilities, human confusion/task data',
+  does:'Pearson-correlate flattened <b>confusion matrices</b> / per-task accuracy profiles under degradation (Maniquet 2024).',
+  out:'Pearson ρ',range:['−1','+1'],
+  tells:'Same categories confused & same task-difficulty ordering as humans under degraded viewing — a structured generalization of error-consistency.'},
+
+ {f:'property',n:'ks_similarity',reg:['ks_similarity'],g:'ks',
+  in:'one tuning value per model unit + binned cortical distribution',
+  does:'Normalized <b>Kolmogorov–Smirnov distance</b> between the two distributions; similarity = <code>1 − KS</code>, bootstrapped (1000×).',
+  out:'1 − normalized KS',range:['0','1'],
+  tells:'Does the model grow the same <b>diversity of single-unit tuning</b> (orientation bandwidth, surround suppression…) as the area? Matches the population’s shape, not any neuron.'},
+ {f:'property',n:'factor_dimensionality',reg:['factor_dimensionality'],g:'dim',
+  in:'factored assemblies <code>factor×sample×neuron</code>',
+  does:'Per-factor neural covariance, normalized, <b>softmaxed</b> across factors into dimension fractions.',
+  out:'fraction of dims per factor',range:['0','1'],
+  tells:'How the model <b>budgets dimensions</b> across generative factors (identity vs pose vs lighting). A disentanglement-style diagnostic.'},
+
+ {f:'ceiling',n:'internal_consistency',reg:['internal_consistency'],g:'splithalf',
+  in:'repeated presentations of each stimulus',
+  does:'Correlate <b>split halves</b> of repetitions per neuron, <b>Spearman-Brown</b> corrected, median across neurons.',
+  out:'corrected split-half r',range:['0','1+'],
+  tells:'Reliability of the <b>neural responses</b> — the upper bound for any predictivity metric on that recording.'},
+ {f:'ceiling',n:'predictor_consistency',reg:['predictor_consistency'],g:'splithalf',
+  in:'repetitions per image',
+  does:'10 random 50/50 repetition splits per image, Pearson per neuron, Spearman-Brown corrected.',
+  out:'corrected split-half r',range:['0','1+'],
+  tells:'A more robust split-half reliability when repetition counts vary across images.'},
+ {f:'ceiling',n:'rsa_ceiling',reg:['rsa_ceiling'],g:'subjects',
+  in:'multiple subjects’ neural data',
+  does:'Each subject’s RDM vs the <b>mean RDM of all subjects</b> (upper bound) and of the other N−1 (leave-one-out lower bound), Spearman.',
+  out:'between-subject RDM agreement',range:['0','1'],
+  tells:'The ceiling for RDM benchmarks — how well one subject’s geometry predicts the group, given between-subject variability.'}
+];
+
+/* ---------- render ---------- */
+const content=document.getElementById('content');
+Object.keys(FAM).forEach(fk=>{
+  const fam=FAM[fk];
+  const sec=document.createElement('section');
+  sec.className='fam';sec.dataset.fam=fk;
+  sec.innerHTML=`<div class="fam-head"><span class="dot" style="background:${fam.color}"></span>
+    <h2>${fam.label}</h2><span class="q">${fam.q}</span></div>`;
+  M.filter(m=>m.f===fk).forEach(m=>{
+    const card=document.createElement('div');
+    card.className='card';card.dataset.fam=fk;card.style.setProperty('--accent',fam.color);
+    card.innerHTML=`
+     <div class="card-head"><h3>${m.n}</h3>
+       ${m.reg.map(r=>`<span class="reg">${r}</span>`).join('')}
+       <span class="tag">${fam.label}</span></div>
+     <div class="pipe">
+       <div class="stage"><div class="lab">Inputs</div><div class="body">${m.in}</div></div>
+       <div class="arrow">→</div>
+       <div class="stage"><div class="lab">Statistically does</div>
+         <div class="svgwrap">${G[m.g]||''}</div><div class="body">${m.does}</div></div>
+       <div class="arrow">→</div>
+       <div class="stage"><div class="lab">Output</div>
+         <div class="outbar"><div class="track"></div>
+           <div class="scale"><span>${m.range[0]}</span><span>${m.range[1]}</span></div></div>
+         <div class="stat">${m.out}</div></div>
+     </div>
+     <div class="tells"><b>Tells us →</b> ${m.tells}</div>`;
+    sec.appendChild(card);
+  });
+  content.appendChild(sec);
+});
+
+/* ---------- filter ---------- */
+document.getElementById('filters').addEventListener('click',e=>{
+  const chip=e.target.closest('.chip');if(!chip)return;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  chip.classList.add('active');
+  const f=chip.dataset.f;
+  document.querySelectorAll('.fam').forEach(s=>{s.style.display=(f==='all'||s.dataset.fam===f)?'':'none';});
+});
+</script>
+</body>
+</html>
