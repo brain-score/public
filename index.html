@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brain-Score · Public</title>
+<style>
+  :root{--ink:#1f2328;--muted:#5f6873;--line:#e4e4dd;--accent:#2f7d72}
+  *{box-sizing:border-box}
+  body{margin:0;background:#fff;color:var(--ink);
+    font:17px/1.7 Georgia,"Iowan Old Style",Palatino,"Times New Roman",serif}
+  .wrap{max-width:680px;margin:0 auto;padding:64px 24px 90px}
+  h1{font-size:30px;margin:0 0 6px;letter-spacing:-.3px}
+  .sub{color:var(--muted);margin:0 0 40px;font-size:16px}
+  a.card{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);
+    border-left:3px solid var(--accent);border-radius:10px;padding:18px 20px;margin:0 0 18px;transition:.15s}
+  a.card:hover{border-color:var(--accent);background:#fafaf6}
+  a.card h2{margin:0 0 4px;font-size:19px}
+  a.card p{margin:0;color:var(--muted);font-size:14.5px}
+  .path{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--accent);margin-top:8px}
+  footer{color:#9aa0a6;font-size:13px;border-top:1px solid var(--line);padding-top:16px;margin-top:30px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Brain-Score — Public</h1>
+  <p class="sub">Public-facing pages for the Brain-Score platform.</p>
+
+  <a class="card" href="story/">
+    <h2>Meta-evaluation story</h2>
+    <p>Brain-Score Vision meta-analysis: the structural properties of the benchmark suite.</p>
+    <div class="path">/public/story/</div>
+  </a>
+
+  <a class="card" href="documentation/metric/">
+    <h2>Metric documentation</h2>
+    <p>How each Brain-Score Vision metric works: its inputs, what it statistically does, its output, and what it says about brain-likeness.</p>
+    <div class="path">/public/documentation/metric/</div>
+  </a>
+
+  <footer>github.com/brain-score/public</footer>
+</div>
+</body>
+</html>
