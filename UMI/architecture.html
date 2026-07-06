@@ -4,8 +4,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Architecture · Brain-Score Unified Model Interface</title>
-<link rel="stylesheet" href="style.css?v=17" />
-<link rel="stylesheet" href="architecture.css?v=1" />
+<link rel="stylesheet" href="style.css?v=19" />
+<link rel="stylesheet" href="architecture.css?v=10" />
 </head>
 <body class="arch-body">
 <nav class="nav">
@@ -32,9 +32,11 @@
   <section id="arch-explorer" class="arch-section">
     <h2>Interactive router</h2>
     <p class="lead">Choose a <b>model archetype</b> and an <b>input event</b>. For perceptual
-      inputs, also choose what's being asked of it. The flow on the right is the real dispatch in
-      <code>BrainScoreModel.process()</code> — including the combinations that are deliberately
-      incompatible.</p>
+      inputs, also choose what's being asked of it. The flow on the right is the dispatch in
+      <code>BrainScoreModel.process()</code>. Some combinations route out of the box; others are
+      <b>routable but not yet wired</b> — the router already dispatches them, you just add one
+      capability (a preprocessor or an <code>_fn</code>), no core change; and some fail a genuine
+      pre-flight limit.</p>
 
     <div class="arch-explorer-grid">
       <div class="arch-controls">
@@ -71,14 +73,26 @@
   <!-- ============ routing matrix ============ -->
   <section class="arch-section alt">
     <h2>Routing matrix</h2>
-    <p class="lead">Every model archetype against every input (perceptual inputs shown in their
-      neural-encoding mode). Green routes to an output; amber is a pre-flight
-      <code>CompatibilityError</code>; grey is an unsupported dispatch (no such <code>_fn</code>).
-      Click any cell to load it into the router above.</p>
+    <p class="lead">Every model archetype against every input. Each perceptual cell shows both
+      outputs it can produce: a <code>NeuroidAssembly</code> on top (neural encoding) and a
+      <code>BehavioralAssembly</code> below (readout or generation). This is what the <b>router</b> can do — not just what today's
+      registrations happen to wire. <b class="mtx-key ok">Green</b> routes out of the box (native modality, full input).
+      <span class="mtx-part">◐</span> is <b>partial</b> — the model routes but on only part of a
+      multimodal input (e.g. only the video track of a movie), not the full multimodal benchmark.
+      <span class="mtx-star">*</span> is <b>not out-of-the-box</b>: it needs an adapter (the
+      still↔video frame trick) or a wired capability (a <code>state_change_fn</code>, an
+      <code>action_fn</code>) — effort ranges from a small hook to a real modeling project.
+      <b class="mtx-key compat">CompatibilityError</b> (amber) and
+      <b class="mtx-key na">NotImplementedError</b> (grey) are genuine limits; the cell names the
+      exact exception. Click any cell to load it into the router above.</p>
     <div class="arch-matrix-wrap" id="arch-matrix"></div>
-    <p class="muted small">The incompatible cells aren't bugs — they're the contract doing its job:
-      a text-only model fails fast on images, and an output-only API model can't run neural encoding.
-      The pre-flight check catches these before any compute.</p>
+    <p class="muted small">Examples: a lesion (<code>StateChange</code>) is <span class="mtx-star">*</span> on any
+      <i>white-box</i> model — a small <code>state_change_fn</code> (forward-hook ablation on a hookable
+      layer). An image model on video, or a video model on stills, is <span class="mtx-star">*</span> too:
+      it works only through a frame / fixed-window adapter, not as a true temporal model. A single-tower
+      model on a movie is <span class="mtx-part">◐</span> partial — it reads only its one channel. An
+      output-only / black-box model (a closed API, an embodied policy) is a genuine limit for neural
+      encoding and lesioning: no internal activations.</p>
   </section>
 
   <!-- ============ static contract reference ============ -->
@@ -363,6 +377,6 @@ unified/brainscore/                   # everything built on the interface
   </footer>
 </main>
 
-<script src="architecture.js?v=1"></script>
+<script src="architecture.js?v=12"></script>
 </body>
 </html>

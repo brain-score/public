@@ -14,6 +14,9 @@ body{
 a{color:var(--accent); text-decoration:none}
 code{font-family:"SF Mono",ui-monospace,Menlo,monospace; font-size:.9em;
   background:#eef1f7; border:1px solid var(--line); border-radius:6px; padding:1px 6px; color:#3a3f78}
+/* block code (<pre>): the wrapping <code> must NOT inherit the inline-chip box —
+   an inline border across many lines re-draws per line. The <pre> is the only container. */
+pre code, .code code{background:none; border:0; border-radius:0; padding:0; font-size:inherit; color:inherit}
 h1,h2,h3{line-height:1.15; letter-spacing:-.02em}
 
 /* nav */
@@ -79,7 +82,9 @@ section.dd-collapsed{padding-top:40px; padding-bottom:40px}
   font-size:.92rem; color:#2a3346; margin:0}
 .hero-code{max-width:760px; overflow-x:auto; min-height:8.4em; line-height:1.5}
 #hero-code-body{display:block; white-space:pre}
-.code .k{color:#7c4dff} .code .s{color:#1f9d57} .code .c{color:var(--muted)}
+/* python palette */
+.code .k{color:#7c4dff} .code .s{color:#1f9d57} .code .c{color:var(--muted); font-style:italic}
+.code .n{color:#b26b00} .code .b{color:#0b7285} .code .f{color:#2f6bff} .code .d{color:#8a5a08}
 /* hero swipe: the dynamic model/benchmark/comment slide out left, in from right,
    while the surrounding call skeleton stays fixed — the API is invariant */
 .hero-swap, .hero-tok{transition:transform .3s ease, opacity .3s ease; will-change:transform,opacity}

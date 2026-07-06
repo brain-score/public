@@ -8,10 +8,12 @@ body.arch-body { padding-left: 0 !important; }
 .arch-section.alt { background: linear-gradient(180deg, var(--bg2), transparent 70%); margin: 0 -28px; padding: 40px 28px; }
 .arch-section h2 { font-size: 1.7rem; margin: 0 0 8px; }
 .arch-section h3 { font-size: 1.08rem; margin: 30px 0 8px; }
-.arch-section .lead { color: var(--muted); max-width: 760px; margin: 0 0 22px; }
+.arch-section .lead { color: var(--muted); max-width: none; margin: 0 0 22px; }
 
 /* ---- explorer layout ---- */
-.arch-explorer-grid { display: grid; grid-template-columns: minmax(300px, 0.9fr) 1.1fr; gap: 28px; align-items: start; }
+/* minmax(0, …) lets the right track shrink below the code block's longest line, so a long
+   snippet scrolls inside the code box instead of widening the whole column. */
+.arch-explorer-grid { display: grid; grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.1fr); gap: 28px; align-items: start; }
 @media (max-width: 900px) { .arch-explorer-grid { grid-template-columns: 1fr; } }
 
 .ctrl-group { margin-bottom: 22px; }
@@ -42,7 +44,7 @@ body.arch-body { padding-left: 0 !important; }
 .arch-multi input { accent-color: var(--accent); }
 
 /* ---- output panel ---- */
-.arch-output { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.arch-output { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; min-width: 0; }
 .arch-verdict { border-radius: 10px; padding: 11px 14px; font-size: .9rem; margin-bottom: 18px; line-height: 1.4; }
 .arch-verdict.ok { background: rgba(31,157,87,.09); border: 1px solid rgba(31,157,87,.35); color: #15703f; }
 .arch-verdict.bad { background: rgba(216,72,59,.07); border: 1px solid rgba(216,72,59,.32); color: #a3372c; }
@@ -86,8 +88,18 @@ body.arch-body { padding-left: 0 !important; }
 .arch-mtx td { cursor: pointer; font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: .68rem; transition: filter .12s; }
 .arch-mtx td:hover { filter: brightness(.95); outline: 2px solid var(--accent); outline-offset: -2px; }
 .cm-ok { background: rgba(31,157,87,.12); color: #15703f; }
-.cm-incompat { background: rgba(198,129,15,.13); color: #8a5a08; }
+.cm-compat { background: rgba(198,129,15,.13); color: #8a5a08; }
 .cm-na { background: rgba(91,102,120,.1); color: var(--muted); }
+/* perceptual cells stack two reachable outputs: neural (top) + behavioral (bottom) */
+.arch-mtx td.cm-multi { padding: 5px 6px; background: var(--panel); }
+.mc + .mc { margin-top: 3px; }
+.mc .pill { display: inline-block; padding: 1px 6px; border-radius: 5px; font-weight: 600; font-size: .66rem; }
+.mtx-star { color: #15703f; font-weight: 700; margin-left: 1px; }
+.mtx-part { color: #b26b00; font-weight: 700; margin-left: 1px; }
+.mtx-key { padding: 1px 6px; border-radius: 5px; font-weight: 700; }
+.mtx-key.ok { background: rgba(31,157,87,.14); color: #15703f; }
+.mtx-key.compat { background: rgba(198,129,15,.15); color: #8a5a08; }
+.mtx-key.na { background: rgba(91,102,120,.13); color: var(--muted); }
 
 /* ---- reference tables ---- */
 .arch-ref-table { width: 100%; font-size: .82rem; }
