@@ -19,10 +19,11 @@
 <header class="hero arch-hero">
   <div class="hero-inner">
     <h1>The architecture, end to end.</h1>
-    <p class="sub">Every model registers once and is evaluated through a single method —
-      <code>process(input_event) -&gt; OutputEvent</code>. This page draws out the full set of
-      contracts and the exact internal routing. Pick a model and an input below and watch
-      Brain-Score resolve the call flow, the output type, and any pre-flight failure.</p>
+    <p class="sub">Every subject registers once and is evaluated through a single method —
+      <code>interact(session)</code>. A subject exchanges timestamped events over named channels, and
+      a channel registry documents every allowable input and output. This page draws out the full
+      contract and the exact routing. Pick a subject and an input below and watch Brain-Score resolve
+      the channels, the output, and any pre-flight failure.</p>
   </div>
 </header>
 
@@ -31,21 +32,21 @@
   <!-- ============ interactive explorer ============ -->
   <section id="arch-explorer" class="arch-section">
     <h2>Interactive router</h2>
-    <p class="lead">Choose a <b>model archetype</b> and an <b>input event</b>. For perceptual
-      inputs, also choose what's being asked of it. The flow on the right is the dispatch in
-      <code>BrainScoreModel.process()</code>. Some combinations route out of the box; others are
-      <b>routable but not yet wired</b> — the router already dispatches them, you just add one
-      capability (a preprocessor or an <code>_fn</code>), no core change; and some fail a genuine
+    <p class="lead">Choose a <b>subject</b> and an <b>input channel</b>. For perceptual
+      inputs, also choose what's being asked of it. The flow on the right is what
+      <code>interact(session)</code> resolves — the input channels in, the output channels back.
+      Some combinations run out of the box; others are <b>reachable but not yet wired</b> — the
+      subject already routes them, you just add one harness, no core change; and some fail a genuine
       pre-flight limit.</p>
 
     <div class="arch-explorer-grid">
       <div class="arch-controls">
         <div class="ctrl-group">
-          <div class="ctrl-label">1 · Model archetype</div>
+          <div class="ctrl-label">1 · Subject archetype</div>
           <div class="arch-chips" id="arch-models"></div>
         </div>
         <div class="ctrl-group">
-          <div class="ctrl-label">2 · Input event <span class="muted">(what you pass to process)</span></div>
+          <div class="ctrl-label">2 · Input channel <span class="muted">(what the session sends in)</span></div>
           <div class="arch-chips" id="arch-inputs"></div>
         </div>
         <div class="ctrl-group" id="arch-taskrow">
@@ -53,7 +54,7 @@
           <div class="arch-tasks" id="arch-tasks"></div>
           <label class="arch-multi" id="arch-multi">
             <input type="checkbox" id="arch-multi-cb" />
-            <span><code>multi_modality=True</code> — fan out to every supported tower</span>
+            <span><b>multiple input channels</b> — fan out to every supported tower</span>
           </label>
         </div>
       </div>
@@ -73,25 +74,24 @@
   <!-- ============ routing matrix ============ -->
   <section class="arch-section alt">
     <h2>Routing matrix</h2>
-    <p class="lead">Every model archetype against every input. Each perceptual cell shows both
-      outputs it can produce: a <code>NeuroidAssembly</code> on top (neural encoding) and a
-      <code>BehavioralAssembly</code> below (readout or generation). This is what the <b>router</b> can do — not just what today's
-      registrations happen to wire. <b class="mtx-key ok">Green</b> routes out of the box (native modality, full input).
-      <span class="mtx-part">◐</span> is <b>partial</b> — the model routes but on only part of a
+    <p class="lead">Every subject archetype against every input channel. Each perceptual cell shows both
+      outputs it can produce: a <code>NeuroidAssembly</code> on top (the <code>neural</code> channel) and a
+      <code>BehavioralAssembly</code> below (the <code>behavior</code> channel). This is what the <b>router</b> can do — not just what today's
+      registrations happen to wire. <b class="mtx-key ok">Green</b> runs out of the box (native modality, full input).
+      <span class="mtx-part">◐</span> is <b>partial</b> — the subject routes but on only part of a
       multimodal input (e.g. only the video track of a movie), not the full multimodal benchmark.
       <span class="mtx-star">*</span> is <b>not out-of-the-box</b>: it needs an adapter (the
-      still↔video frame trick) or a wired capability (a <code>state_change_fn</code>, an
-      <code>action_fn</code>) — effort ranges from a small hook to a real modeling project.
+      still↔video frame trick) or a wired harness (a state-change handler, a policy) — effort ranges from a small hook to a real modeling project.
       <b class="mtx-key compat">CompatibilityError</b> (amber) and
       <b class="mtx-key na">NotImplementedError</b> (grey) are genuine limits; the cell names the
       exact exception. Click any cell to load it into the router above.</p>
     <div class="arch-matrix-wrap" id="arch-matrix"></div>
-    <p class="muted small">Examples: a lesion (<code>StateChange</code>) is <span class="mtx-star">*</span> on any
-      <i>white-box</i> model — a small <code>state_change_fn</code> (forward-hook ablation on a hookable
-      layer). An image model on video, or a video model on stills, is <span class="mtx-star">*</span> too:
+    <p class="muted small">Examples: a lesion (a <code>StateChange</code> on the <code>lesion:</code> channel) is <span class="mtx-star">*</span> on any
+      <i>white-box</i> subject — a small state-change handler (forward-hook ablation on a hookable
+      layer). An image subject on video, or a video subject on stills, is <span class="mtx-star">*</span> too:
       it works only through a frame / fixed-window adapter, not as a true temporal model. A single-tower
-      model on a movie is <span class="mtx-part">◐</span> partial — it reads only its one channel. An
-      output-only / black-box model (a closed API, an embodied policy) is a genuine limit for neural
+      subject on a movie is <span class="mtx-part">◐</span> partial — it reads only its one channel. An
+      output-only / black-box subject (a closed API, an embodied policy) is a genuine limit for neural
       encoding and lesioning: no internal activations.</p>
   </section>
 
@@ -101,69 +101,69 @@
     <p class="lead">The full surface. These are the only things a model author touches; everything
       else (dispatch, caching, compatibility, memory) is handled by the framework.</p>
 
-    <h3>1 · The <code>Subject</code> ABC</h3>
-    <p>The minimal interface every model satisfies. No capability-named methods
-      (<code>look_at</code>, <code>digest_text</code>) — capability is <i>derived</i> from the
-      preprocessors present. <code>UnifiedModel</code> remains a deprecated alias for
-      existing imports.</p>
-    <pre class="code"><code>class Subject(ABC):
-    def process(self, input_event: InputEvent,
-                multi_modality: bool = False) -> OutputEvent: ...
-    def start_recording(self, recording_target: str | list[str],
-                        time_bins=None, recording_type=None) -> None: ...
-    def start_task(self, task_context: TaskContext) -> None: ...
-    def reset(self) -> None: ...
+    <h3>1 · The core artifacts</h3>
+    <p>A subject exchanges timestamped events over named channels through one method. Direction is set
+      by who produces the event — the world produces inputs, the subject produces outputs.</p>
+    <pre class="code"><code>@dataclass
+class StreamEvent:                # the carrier for BOTH inputs and outputs
+    channel: str                  # 'vision' · 'neural:IT' · 'motor' · 'lesion:V4'
+    payload: Any                  # shape/dtype defined by the channel registry
+    t_ms: float                   # time on the session clock
+    meta: dict
 
-    @property
-    def available_modalities(self) -> set[str]:   # derived from preprocessors.keys()
-        ...</code></pre>
+class Session(ABC):               # the duplex; open- vs closed-loop differ only here
+    def next_input(self) -&gt; StreamEvent | None: ...   # None ends the stream
+    def emit(self, event: StreamEvent) -&gt; None: ...    # receive a subject's output
 
-    <h3>2 · The <code>BrainScoreModel</code> registration</h3>
-    <p>The concrete class. A registration is one constructor call; the optional slots are what
-      decide which dispatch branches the model can take.</p>
-    <pre class="code"><code>BrainScoreModel(
-    identifier: str,
-    model,                              # the nn.Module / backbone (None for output-only)
-    region_layer_map: dict,             # brain region -> layer path
-    preprocessors: dict[str, Callable], # modality -> transform  (THIS defines supported_modalities)
-    activations_model=None,             # wrapper(s): PytorchWrapper / Text / VLMVision / Video / Audio
-    generation_fn=None,                 # behavioral: (row, instruction, label_set) -> str
-    action_fn=None,                     # embodied:   (EnvironmentStep) -> EnvironmentResponse
-    state_change_fn=None,               # lesion:     (StateChange) -> (PerturbationApplied, cleanup)
-    behavioral_readout_layer=None,      # fit a logistic head on this layer
-    region_modality_map=None,           # multimodal: region -> which tower extracts it
-    backbone_id=None,                   # share a feature cache across registrations
-)</code></pre>
+class Subject(ABC):               # the minimal interface every subject satisfies
+    in_channels:  set[str]        # channels it can consume
+    out_channels: set[str]        # channels it can emit
+    def interact(self, session: Session) -&gt; None: ...  # the ONE evaluation method
+    def reset(self) -&gt; None: ...                        # clear state / active perturbations</code></pre>
+    <p class="muted small"><code>interact</code> pulls input events and emits output events over the
+      subject's own time. Open- and closed-loop are indistinguishable from inside it — the session owns
+      that distinction. A model implements it directly; a human harness implements it by mediating a
+      biological subject.</p>
 
-    <h3>3 · Input events <span class="muted">— the <code>InputEvent</code> union</span></h3>
+    <h3>2 · Channels — the grammar</h3>
+    <p>A channel name is <code>family</code> or <code>family:address</code>. Channels are the only
+      extension point: a new modality, readout, device, or perturbation is a new registry entry,
+      never a new method or event type.</p>
     <table class="paths-table arch-ref-table">
-      <tr><th>Event</th><th>Carries</th><th>Dispatches to</th></tr>
-      <tr><td><code>StimulusSet</code></td><td>columns for one modality (image / text / audio / video)</td><td>preprocessor → activations_model (or behavioral path)</td></tr>
-      <tr><td><code>MultimodalStimulusSet</code></td><td>columns for several modalities + per-modality sampling rates</td><td>one or every supported tower</td></tr>
-      <tr><td><code>StateChange</code></td><td><code>Selection</code> (which units) + <code>Perturbation</code> (zero/scale/replace), or a reset handle</td><td><code>state_change_fn</code></td></tr>
-      <tr><td><code>EnvironmentStep</code></td><td>cameras + proprioception + instruction (DROID-shaped), or a generic observation</td><td><code>action_fn</code></td></tr>
-      <tr><td><code>Message</code></td><td>an inter-agent message (multi-agent rollout)</td><td><code>action_fn</code> (responder)</td></tr>
+      <tr><th>Direction</th><th>Families</th></tr>
+      <tr><td><b>Input</b></td><td><code>vision</code> · <code>text</code> · <code>audio</code> · <code>video</code> · <code>instruction</code> · <code>proprioception</code> · <code>lesion:&lt;addr&gt;</code> · <code>stimulation:&lt;addr&gt;</code> · <code>pharmacological:&lt;agent&gt;</code></td></tr>
+      <tr><td><b>Output</b></td><td><code>neural:&lt;region&gt;</code> · <code>behavior</code> · <code>motor</code> · <code>pupil</code> · <code>skin_conductance</code></td></tr>
     </table>
-    <p class="muted small">These differ along <b>two axes</b>, not one. <i>Content:</i> they all present
-      perceptual/linguistic input — an <code>EnvironmentStep</code> doesn't sit beside
-      <code>StimulusSet</code>, its <code>observation</code> <i>is</i> a (Multimodal)StimulusSet, and a
-      <code>Message</code> is wrapped to <code>EnvironmentStep(observation=message)</code> at dispatch.
-      <i>Interaction:</i> <code>StimulusSet</code> is a <b>batched, open-loop, stateless</b> set (N
-      presentations → one assembly), while <code>EnvironmentStep</code> / <code>Message</code> are
-      <b>single-step, closed-loop, stateful</b> (the output feeds the next input → a response). You can't
-      batch a closed loop — step <i>t+1</i> doesn't exist until the model acts at <i>t</i> — so the split is
-      that interaction axis, not the content (which is already shared).</p>
+    <p class="muted small">For <code>neural:&lt;region&gt;</code> the address is a recordable region; for
+      <code>lesion:</code> / <code>stimulation:</code> it is a unit selector (a layer path, optional
+      indices) interpreted by the harness. Recording and perturbation share one address grammar.</p>
 
-    <h3>4 · Output events <span class="muted">— the <code>OutputEvent</code> union</span></h3>
+    <h3>3 · The channel registry <span class="muted">— the contract's teeth</span></h3>
+    <p>Because a payload is opaque at the Python type level, the registry is what keeps the substrate
+      disciplined. It is a documented, runtime-queryable table; each entry defines a channel's
+      direction, payload contract (dtype / shape / units), recognized <code>meta</code> keys, address
+      grammar, and owner. A new sense, device, or readout is a registry row; nothing in the <code>Subject</code>
+      contract changes.</p>
+
+    <h3>4 · The typed helpers <span class="muted">— the everyday surface</span></h3>
+    <p>The substrate is general; the everyday surface is typed and ergonomic. Each helper builds a
+      session, calls <code>interact</code>, and collects the output into the assembly the metrics
+      already consume. Benchmark authors almost never touch a raw <code>StreamEvent</code>.</p>
+    <pre class="code"><code>score_stimuli(subject, stimulus_set, record='IT')  -&gt; NeuroidAssembly
+score_behavior(subject, task_context)              -&gt; BehavioralAssembly
+apply_state_change(subject, state_change)          -&gt; handle          # lesion / stimulation
+run_environment(subject, environment)              -&gt; trajectory       # closed-loop motor</code></pre>
+
+    <h3>5 · Output channels — what a subject emits</h3>
     <table class="paths-table arch-ref-table">
-      <tr><th>Output</th><th>Produced by</th><th>Shape</th></tr>
-      <tr><td><code>NeuroidAssembly</code></td><td>neural encoding</td><td>(presentation, neuroid[, time_bin]) with layer/region/modality coords</td></tr>
-      <tr><td><code>BehavioralAssembly</code></td><td>generation or readout</td><td>(presentation, choice) probabilities / one-hot over label_set</td></tr>
-      <tr><td><code>EnvironmentResponse</code></td><td>embodied action_fn</td><td>action: (7,) + optional action_dict / metadata</td></tr>
-      <tr><td><code>PerturbationApplied</code></td><td>state_change_fn</td><td>handle_id for selective restore</td></tr>
+      <tr><th>Channel</th><th>Produced by</th><th>Collected as</th></tr>
+      <tr><td><code>neural:&lt;region&gt;</code></td><td>neural encoding at the region's layer</td><td>(presentation, neuroid[, time_bin]) with layer / region / modality coords</td></tr>
+      <tr><td><code>behavior</code></td><td>a fitted readout or the generation path</td><td>(presentation, choice) probabilities / one-hot over a label set</td></tr>
+      <tr><td><code>motor</code></td><td>a policy in a closed-loop session</td><td>a continuous action vector / trajectory</td></tr>
+      <tr><td><code>pupil</code> · <code>skin_conductance</code></td><td>a human harness</td><td>scalar or time series</td></tr>
     </table>
 
-    <h3>5 · The activations-model wrappers</h3>
+    <h3>6 · The activations-model wrappers <span class="muted">(model harnesses)</span></h3>
     <table class="paths-table arch-ref-table">
       <tr><th>Wrapper</th><th>For</th><th>Input shape</th><th>Time-resolved</th></tr>
       <tr><td><code>PytorchWrapper</code></td><td>CNN / ViT vision</td><td>(B, C, H, W)</td><td>via add_time_bin_axis</td></tr>
@@ -176,7 +176,7 @@
       <code>(backbone_id, stimuli_identifier, layers)</code> — extract every layer in one forward
       pass; later benchmarks for any region are cache hits.</p>
 
-    <h3>5b · Time <span class="muted">— the <code>time_bin</code> axis + the temporal kit</span></h3>
+    <h3>6b · Time <span class="muted">— the <code>time_bin</code> axis + the temporal kit</span></h3>
     <p>Naturalistic benchmarks need <i>when</i>, not just <i>what</i>. Every time-aware wrapper emits a
       <code>time_bin</code> dim with canonical coords (<code>time_bin_start_ms</code> /
       <code>time_bin_end_ms</code> / <code>time_bin_center_ms</code>), so a benchmark aligns any wrapper's
@@ -197,48 +197,46 @@
       in the benchmark (<code>temporal_bin</code> + <code>hrf_convolve</code>), not a commitment layer —
       the same reason regions map to layers freely rather than through a fixed hierarchy.</p>
 
-    <h3>6 · The dispatch table <span class="muted">— inside <code>process()</code></span></h3>
-    <pre class="code"><code>def process(input_event, multi_modality=False):
-    # Dispatch is a TABLE, not a hardcoded ladder. A new capability / IO type
-    # registers a handler via register_input_handler — this loop never changes.
-    for event_type, handler in self._INPUT_HANDLERS:    # (StateChange, EnvironmentStep, Message)
-        if isinstance(input_event, event_type):
-            return getattr(self, handler)(input_event)  # PerturbationApplied / EnvironmentResponse / Message
-    return self._handle_stimulus_set(input_event, multi_modality)   # perceptual fallback — the 99% path
+    <h3>7 · Inside <code>interact</code> <span class="muted">— dispatch by channel</span></h3>
+    <pre class="code"><code>def interact(self, session):
+    # Drain the session's input events, read which channels it wants back,
+    # run the extraction, and emit output events. A subject dispatches on the
+    # requested OUTPUT channel — never on a hardcoded event-type ladder.
+    for channel in session.requested_output_channels:
+        if   channel.startswith('neural:'): emit_neural(session, region_of(channel))
+        elif channel == 'behavior':         emit_behavior(session)     # readout or generation
+        elif channel == 'motor':            drive_closed_loop(session) # live: act, observe, repeat
+        elif channel == 'perturbation':     apply_and_ack(session)     # lesion / stimulation
+    # A new output family is a new registry channel + one emit-branch;
+    # the substrate and every existing benchmark are untouched.</code></pre>
+    <p class="muted small">The perceptual path is the 99% case: input events on <code>vision</code> /
+      <code>text</code> / <code>audio</code> / <code>video</code> flow through the matching preprocessor
+      and the shared activations model, extracting every recorded region's layer in one forward pass. A
+      multimodal input fans out to every tower and concatenates along the neuroid axis with a per-neuroid
+      <code>modality</code> coord.</p>
 
-def _handle_stimulus_set(stimuli, multi_modality=False):  # the perceptual 99% path
-    if generation_viable_for_task():             return _generate_predictions()   # BehavioralAssembly
-    if readout_viable_for_task():                return _predict_probabilities()  # BehavioralAssembly
-
-    detected = _detect_modalities(stimuli)        # by column name
-    layers   = recording_layers or [recording_layer]
-    if multi_modality and len(detected) > 1:      # fan out, concat w/ modality coord
-        ...
-    else:                                         # MODALITY_PRIORITY = (vision, text, audio, video)
-        modality = pick_by_priority(detected)
-        if len(detected) > 1: warn_ambiguous_default(modality)
-    return activations_model(preprocessors[modality](stimuli), layers)            # NeuroidAssembly</code></pre>
-
-    <h3>7 · The compatibility contract</h3>
+    <h3>8 · Compatibility <span class="muted">— checked before compute</span></h3>
     <p>Run as a pre-flight check (then a memory probe) <i>before</i> any benchmark, so mismatches
-      fail in milliseconds instead of mid-extraction:</p>
-    <pre class="code"><code>benchmark.required ⊆ model.available     # the model can take what the benchmark gives
-model.required    ⊆ benchmark.required   # the benchmark provides what the model demands</code></pre>
-    <p class="muted small">A benchmark declares exactly one input format via
-      <code>required_modalities</code>; a model declares <code>required ⊆ available</code>. GPT-2's
-      <code>required={text}</code> is what makes it fail fast on a V4 image benchmark.
-      <code>check_memory()</code> then runs the benchmark stimulus set through
-      <code>process()</code> as an extraction probe, measures peak memory (CUDA / MPS / CPU),
-      reads feature width, and estimates metric + ceiling memory from benchmark metadata.</p>
+      fail in milliseconds instead of mid-extraction. A benchmark declares its required input and
+      requested output channels; a subject declares what it can consume and emit:</p>
+    <pre class="code"><code>benchmark.required_input_channels   ⊆ subject.in_channels
+benchmark.requested_output_channels ⊆ subject.out_channels
+subject.required_channels           ⊆ benchmark.required_input_channels</code></pre>
+    <p class="muted small">An incompatible pair displays as <code>N/A</code>, never a misleading zero.
+      A benchmark declares exactly one input format; multiple valid formats are separate benchmark
+      variants. A text-only subject's <code>required={text}</code> is what makes it fail fast on a V4
+      image benchmark. <code>check_memory()</code> then runs the stimulus set through the subject as an
+      extraction probe, measures peak memory (CUDA / MPS / CPU), and estimates metric + ceiling memory.</p>
   </section>
 
   <!-- ============ how you extend it ============ -->
   <section class="arch-section alt">
-    <h2>Extending it — five inherited seams + one new</h2>
+    <h2>Extending it — five inherited seams + the channel seam</h2>
     <p class="lead">The interface is a <b>backbone</b>: a small, stable core you extend along well-defined
       seams. Model / Benchmark / Metric / Data / Stimulus-set <b>are Brain-Score's existing plugin
-      registries</b>, reused unchanged; <b>Capability</b> is the only seam the unified interface adds.
-      We ship the seams + a few reference integrations; you bring the breadth. Extending happens by registration, not by editing the core dispatch.</p>
+      registries</b>, reused unchanged; the <b>channel registry</b> and its <b>harnesses</b> are the seam
+      the unified interface adds. We ship the seams + a few reference integrations; you bring the breadth.
+      Extending happens by registration, not by editing the core.</p>
 
     <h3>One mechanism: registries</h3>
     <p>Everything is a factory registered under a string identifier. A plugin is a subpackage whose
@@ -250,33 +248,32 @@ metric    = brainscore.load_metric('your-metric')         # the metric seam, now
 benchmark = brainscore.load_benchmark('your-benchmark')
 score     = brainscore.score('your-model', 'your-benchmark')</code></pre>
     <p class="muted small"><code>load_*</code> checks the unified registry first, then falls back to
-      the vision / language registries, so legacy plugins keep working. Five registries —
-      <code>data</code>, <code>stimulus_set</code>, <code>metric</code>, <code>benchmark</code>,
-      <code>model</code> — are Brain-Score's; the unified interface adds a sixth, the
-      <code>Capability</code> registry (<code>register_capability</code>), which the model's
-      <code>process()</code> iterates. A capability is a self-registering class, not a hard-coded branch.</p>
+      the vision / language registries, so every registered model and benchmark keeps working. Five
+      registries — <code>data</code>, <code>stimulus_set</code>, <code>metric</code>,
+      <code>benchmark</code>, <code>model</code> — sit alongside the <b>channel registry</b>, which
+      documents every allowable input and output. A new channel is a self-registering entry, not a
+      hard-coded branch.</p>
 
     <table class="paths-table arch-ref-table">
       <tr><th>Seam</th><th>You implement</th><th>Contract</th><th>Template</th></tr>
-      <tr><td><b>Model</b></td><td><code>get_model() -&gt; BrainScoreModel</code></td><td><code>process(input_event) -&gt; OutputEvent</code></td><td><code>templates/new_model/</code></td></tr>
+      <tr><td><b>Model</b></td><td><code>get_model() -&gt; BrainScoreModel</code></td><td><code>interact(session)</code></td><td><code>templates/new_model/</code></td></tr>
       <tr><td><b>Benchmark</b></td><td>a <code>BenchmarkBase</code> subclass</td><td><code>__call__(candidate) -&gt; Score</code></td><td><code>templates/new_benchmark/</code></td></tr>
       <tr><td><b>Metric</b></td><td>a <code>Metric</code> subclass</td><td><code>__call__(assembly1, assembly2) -&gt; Score</code></td><td><code>templates/new_metric/</code></td></tr>
       <tr><td><b>Data / Stimulus&nbsp;set</b></td><td>a loader in <code>data_registry</code> / <code>stimulus_set_registry</code></td><td>returns a <code>DataAssembly</code> / <code>StimulusSet</code>, reused by many benchmarks</td><td>domain-repo pattern</td></tr>
-      <tr><td><b>Capability</b> <span class="muted">(new)</span></td><td>a self-registering <code>Capability</code> subclass (<code>handles</code> / <code>process</code>)</td><td>added as a new file via <code>register_capability</code>; <code>BrainScoreModel</code> + the <code>Subject</code> ABC stay unchanged</td><td><code>templates/new_capability/</code></td></tr>
+      <tr><td><b>Channel</b> <span class="muted">(new)</span></td><td>a channel registry entry + a harness that reads or emits it</td><td>documents the payload contract; <code>BrainScoreModel</code> + the <code>Subject</code> ABC stay unchanged</td><td><code>templates/new_channel/</code></td></tr>
     </table>
 
     <p>The <b>Metric</b> seam is where the field is moving — beyond linear predictivity toward
       representational, <b>topographic</b>, behavioral, and causal alignment. Each distinct axis is a
       distinct metric (e.g. <code>load_metric('topographic-alignment')</code> scores a model's spatial
       unit layout against cortical topography, which predictivity is blind to — it is permutation-invariant
-      over units). Filling an existing <b>Capability</b> slot needs no core change at all; only a genuinely
-      new input/output <i>type</i> adds a row to process()'s dispatch table (one
-      <code>register_input_handler</code> call plus a handler) — the dispatch loop is never edited.
-      The five capabilities the interface ships with (neural encoding, behavioral readout, generation,
-      embodied action, state-change) are themselves registered <code>Capability</code> plugins: a new
-      capability is a new self-registering file, dispatched by <code>process()</code> with <b>zero edits
-      to <code>BrainScoreModel</code> or the <code>Subject</code> ABC</b> — Open/Closed, and there is a
-      test that proves it by dispatching a capability defined in a fresh file.</p>
+      over units). On the input/output side, a new modality, readout, device, or perturbation is a new
+      <b>channel</b>: a registry entry plus a harness that reads or emits it, with <b>zero edits to
+      <code>BrainScoreModel</code> or the <code>Subject</code> ABC</b> — Open/Closed. The channels the
+      interface ships with — sensory input, <code>neural</code>, <code>behavior</code>,
+      <code>motor</code>, perturbation, and reserved physiological readouts — are all registry entries;
+      a new one is a new entry, not a new method, and a drift guard pins the registry so the contract
+      and the docs cannot silently diverge.</p>
 
     <div class="callout" style="border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:14px 16px;margin:14px 0;background:var(--panel2)">
       <p style="margin:0 0 6px"><b>The topographic axis, on real fMRI (a first n=2 sign-check).</b> Scored on an NSD
@@ -294,7 +291,7 @@ score     = brainscore.score('your-model', 'your-benchmark')</code></pre>
     </div>
 
     <p class="muted small"><b>What the backbone deliberately leaves to you:</b> discovery / analysis
-      pipelines (they consume <code>process()</code> output — ship them as scripts, not core
+      pipelines (they consume the collected assemblies — ship them as scripts, not core
       primitives), model-internal descriptors that don't compare to the brain, model training, and
       catalog breadth. Full guide: <code>EXTENDING.md</code> + <code>templates/</code> in the repo.</p>
   </section>
@@ -313,13 +310,15 @@ score     = brainscore.score('your-model', 'your-benchmark')</code></pre>
 
       <div style="margin-top:16px">
       <pre class="code arch-tree"><code>core/brainscore_core/                 # the interface spine — no heavy ML deps
-├── model_interface.py                # Subject/UnifiedModel ABC · BrainScoreModel · process() dispatch · event types
-├── compatibility.py                  # pre-flight modality/region check (fail fast)
+├── model_interface.py                # Subject ABC · BrainScoreModel · interact() · event materializers
+├── streaming.py                      # StreamEvent · Session · channel grammar
+├── streaming_helpers.py              # score_stimuli / score_behavior / apply_state_change / run_environment
+├── compatibility.py                  # pre-flight channel check (fail fast)
 ├── memory.py                         # cross-platform CUDA/MPS/CPU memory probe
 ├── temporal.py                       # temporal_bin · hrf_convolve · contiguous_block_cv · window_plan
 ├── multimodal.py                     # MultimodalStimulusSet
 ├── behavior.py                       # ProbabilitiesClassifier (logistic readout head)
-├── io_catalog.py                     # queryable catalog of allowable I/O contracts
+├── io_catalog.py                     # the channel registry (allowable I/O + payload contracts)
 ├── nulls.py                          # null-control baselines (the score floor)
 └── metrics/                          # Score · Metric bases + canonical per-unit Pearson (numeric.py)
 
@@ -360,9 +359,9 @@ unified/brainscore/                   # everything built on the interface
 ├── perturbation.py                   # builds the state_change_fn ablation closure
 ├── percept_window.py                 # reconstruct what the model ingested (&quot;what it saw&quot;)
 ├── activation_window.py              # capture activations during any loop
-├── witness.py · witness_render.py    # record + render a process() call for replay
+├── witness.py · witness_render.py    # record + render an interact() call for replay
 ├── topographic_support.py            # tissue-coord contract + NSD-surface staging
-├── templates/                        # copy-to-start: new_model / benchmark / metric / capability
+├── templates/                        # copy-to-start: new_model / benchmark / metric / channel
 └── scripts/ · experiments/           # maintained drivers vs one-off research runs</code></pre>
       <p class="muted small">The core spine carries no heavy ML dependencies, so <code>import brainscore</code> stays light — torch / transformers / cv2 load only when a model is actually loaded. <code>PytorchWrapper</code> (CNN/ViT vision) is reused unchanged from the vision domain repo.</p>
       </div>
@@ -370,9 +369,9 @@ unified/brainscore/                   # everything built on the interface
   </section>
 
   <footer class="footer">
-    <div><b>One method, every capability.</b> The routing above mirrors the framework's dispatch table
-      (a hand-maintained illustration of process(), not auto-generated); the contracts are the complete author-facing
-      surface.</div>
+    <div><b>One method, every capability.</b> The routing above illustrates how a session's channels
+      resolve to an output (a hand-maintained illustration, not auto-generated); the contracts are the
+      complete author-facing surface.</div>
     <div class="muted small"><a href="index.html">← back to the overview</a></div>
   </footer>
 </main>

@@ -23,14 +23,14 @@ window.BSU_DATA = {
       "from brainscore.harnesses.gymnasium_harness import play_gym_episode",
       "model  = load_model(\"qwen2.5-vl-7b\")",
       "result = play_gym_episode(model, \"GridGame-5x5\")",
-      "# embodied: the model emits an action from process(EnvironmentStep) each tick"
+      "# embodied: the subject emits an action on the motor channel each tick"
     ]},
     {"lines": [
-      "from brainscore import load_model, load_benchmark",
+      "from brainscore import load_model, load_benchmark, apply_state_change",
       "model = load_model(\"qwen2.5-vl-3b\")",
-      "model.process(StateChange(target=vwf_units, perturbation=\"zero\"))  # lesion",
+      "apply_state_change(model, StateChange(target=vwf_units, perturbation=\"zero\"))  # lesion",
       "score = load_benchmark(\"Yeatman2021-lexical_decision-image\")(model)",
-      "# perturbation: score the lesioned model; model.reset() restores it"
+      "# perturbation: score the lesioned subject; model.reset() restores it"
     ]},
     {"model": "random-vit-b-32", "benchmark": "MajajHong2015public.IT-pls", "comment": "# even the null floor registers the same way"}
   ],
@@ -127,7 +127,7 @@ window.BSU_DATA = {
       },
       {
         "capability": "State-change perturbation",
-        "example": "process(StateChange)",
+        "example": "apply_state_change(...)",
         "status": "structurally-tested",
         "evidence": "Hook install, indexed ablation, concurrent handles, and reset are tested on a toy torch model."
       },

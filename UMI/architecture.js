@@ -1,10 +1,10 @@
 /* Interactive architecture explorer for the Brain-Score Unified Model Interface.
  *
- * Mirrors the real dispatch in core/brainscore_core/model_interface.py::
- * BrainScoreModel.process() and the compatibility contract in compatibility.py.
- * Pick a model archetype + an input event (+ a behavioral task), and it resolves
- * the exact call flow, the OutputEvent type, and any pre-flight failure — honestly,
- * including the incompatible combinations.
+ * Mirrors the real channel routing in core/brainscore_core/model_interface.py::
+ * BrainScoreModel.interact() and the compatibility contract in compatibility.py.
+ * Pick a subject archetype + an input channel (+ a behavioral task), and it resolves
+ * the exact call flow, which output channel it emits on, and any pre-flight failure —
+ * honestly, including the incompatible combinations.
  */
 (function () {
   'use strict';
@@ -22,32 +22,32 @@
   //   action      = has action_fn (embodied closed loop)
   //   state_change= has state_change_fn (lesion/perturb)
   const MODELS = [
-    { id: 'image', name: 'Image model', eg: 'CLIP ViT-B/32 · ResNet-50 · random-ViT (null)',
+    { id: 'image', name: 'Image subject', eg: 'CLIP ViT-B/32 · ResNet-50 · random-ViT (null)',
       wrappers: ['PytorchWrapper'], preprocessors: ['vision'], available: ['vision'], required: [],
       has: { activations: true, generation: false, action: false, state_change: false },
       blurb: 'A CNN/ViT wrapped by PytorchWrapper; forward hooks expose any layer.' },
-    { id: 'language', name: 'Language model', eg: 'GPT-2',
+    { id: 'language', name: 'Language subject', eg: 'GPT-2',
       wrappers: ['TextWrapper'], preprocessors: ['text'], available: ['text'], required: ['text'],
       has: { activations: true, generation: false, action: false, state_change: false },
       blurb: 'TextWrapper tokenizes + runs the causal LM; required={text} hard-gates non-text benchmarks.' },
-    { id: 'vlm', name: 'Vision-language model (VLM)', eg: 'Qwen2.5-VL · BLIP-2',
+    { id: 'vlm', name: 'Vision-language subject (VLM)', eg: 'Qwen2.5-VL · BLIP-2',
       wrappers: ['VLMVisionWrapper', 'TextWrapper'], preprocessors: ['vision', 'text'], available: ['vision', 'text'], required: [],
       has: { activations: true, generation: true, action: false, state_change: true },
       blurb: 'Two towers (flattened-patch vision + causal text). Often also instruction-following (generation_fn) and lesionable (state_change_fn); a natural VLA policy once an action_fn is wired.' },
-    { id: 'video', name: 'Video model', eg: 'V-JEPA v1/v2 · VideoMAE',
+    { id: 'video', name: 'Video subject', eg: 'V-JEPA v1/v2 · VideoMAE',
       wrappers: ['VideoWrapper'], preprocessors: ['video'], available: ['video'], required: ['video'],
       has: { activations: true, generation: false, action: false, state_change: false },
       blurb: 'VideoWrapper consumes (B,T,C,H,W); returns time-resolved features.' },
-    { id: 'audio', name: 'Audio model', eg: 'Wav2Vec2 · HuBERT · Whisper',
+    { id: 'audio', name: 'Audio subject', eg: 'Wav2Vec2 · HuBERT · Whisper',
       wrappers: ['AudioWrapper'], preprocessors: ['audio'], available: ['audio'], required: ['audio'],
       has: { activations: true, generation: false, action: false, state_change: false },
       blurb: 'AudioWrapper resamples + runs an HF audio encoder; mean-time or time-series features.' },
-    { id: 'av', name: 'Multimodal A+V model', eg: 'V-JEPA + Wav2Vec2',
+    { id: 'av', name: 'Multimodal A+V subject', eg: 'V-JEPA + Wav2Vec2',
       wrappers: ['VideoWrapper', 'AudioWrapper'], preprocessors: ['video', 'audio'], available: ['video', 'audio'], required: [],
       has: { activations: true, generation: false, action: false, state_change: false },
       regionModalityMap: true,
-      blurb: 'Two preprocessors + region_modality_map routes each region to its tower. Needs multi_modality=True to use both at once.' },
-    { id: 'api', name: 'Closed-weight API model', eg: 'Claude · GPT-4 · DeepSeek · OpenRouter',
+      blurb: 'Two preprocessors + region_modality_map routes each region to its tower. Needs multiple input channels to use both at once.' },
+    { id: 'api', name: 'Closed-weight API subject', eg: 'Claude · GPT-4 · DeepSeek · OpenRouter',
       wrappers: [], preprocessors: ['vision', 'text'], available: ['vision', 'text'], required: [],
       has: { activations: false, generation: true, action: false, state_change: false },
       blurb: 'Output-only: generation_fn closure, activations_model=None. Behavioral (generation) out of the box; embodied only if the API exposes an action schema and you wire an action_fn.' },
@@ -57,7 +57,7 @@
       blurb: 'action_fn(EnvironmentStep) -> EnvironmentResponse. Drives the closed loop; no perceptual extraction.' }
   ];
 
-  // ---- input events (what you hand to process) ----
+  // ---- input channels (what the session sends in) ----
   const INPUTS = [
     { id: 'image', name: 'Images', event: 'StimulusSet', modality: 'vision', column: 'image_file_name', perceptual: true },
     { id: 'text', name: 'Sentences', event: 'StimulusSet', modality: 'text', column: 'sentence', perceptual: true },
@@ -82,11 +82,20 @@
     video: 'Lahner2024 BOLDMoments (video · neural)'
   };
 
-  // ---- routing engine: mirror of process() + the pre-flight compatibility check ----
+  // ---- routing engine: mirror of interact() + the pre-flight compatibility check ----
   const S = (kind, label, sub, contract) => ({ kind, label, sub, contract });
   const ok = (steps, output, bench, model) =>
     ({ ok: true, steps, output, bench, model });
   const err = (etype, msg, steps) => ({ ok: false, etype, msg, steps: steps || [] });
+
+  // the named channel(s) a given input drives — inputs are framed by channel, not event type.
+  // ('{addr}' / '{region}' are placeholders, kept HTML-safe for innerHTML rendering.)
+  function channelLabel(inp) {
+    if (inp.event === 'StateChange') return 'lesion:{addr}';
+    if (inp.event === 'EnvironmentStep') return 'vision + proprioception';
+    const mods = Array.isArray(inp.modality) ? inp.modality : [inp.modality];
+    return mods.join(' + ');
+  }
 
   function pickByPriority(mods) {
     for (const m of MODALITY_PRIORITY) if (mods.includes(m)) return m;
@@ -122,12 +131,12 @@
       ? 'a frame-sampling adapter — frames pooled, not a true temporal model'
       : 'a fixed-window adapter — a still padded to a 1-frame clip';
   }
-  // tooltip for a movie where the model covers only some channels. If it has >1 native tower,
-  // covering all of them needs multi_modality=True (single dispatch picks one via MODALITY_PRIORITY).
+  // tooltip for a movie where the subject covers only some channels. If it has >1 native tower,
+  // covering all of them needs multiple input channels (single-channel routing picks one via MODALITY_PRIORITY).
   function partialNeed(inMods, directMods) {
     const dropped = inMods.filter(m => !directMods.includes(m));
     return directMods.length > 1
-      ? `covers ${directMods.join(' + ')} with multi_modality=True (single dispatch picks one via MODALITY_PRIORITY); ${dropped.join('/')} ignored — not the full benchmark`
+      ? `covers ${directMods.join(' + ')} with multiple input channels (single-channel routing picks one via MODALITY_PRIORITY); ${dropped.join('/')} ignored — not the full benchmark`
       : `uses only the ${directMods[0]} channel; ${dropped.join('/')} ignored — not the full multimodal benchmark`;
   }
   // a model with ≥2 native towers matching a multimodal input naturally uses ALL of them (multi-route);
@@ -165,7 +174,7 @@
       return { tier: 'optin', out: 'EnvironmentResponse',
         need: C.generation
           ? 'wire an action_fn — generate the action (VLA-style: emit action tokens / pick a move)'
-          : 'wire an action_fn — a policy head mapping this model\'s features to an action' };
+          : 'wire an action_fn — a policy head mapping this subject\'s features to an action' };
     }
 
     // perceptual input, neural-encoding lens (the matrix default). Neural encoding needs
@@ -183,7 +192,7 @@
     if (inMods.length > 1) {   // multimodal input (movie): a single/few-tower model covers only part
       if (directMods.length) return { tier: 'partial', out: 'NeuroidAssembly', need: partialNeed(inMods, directMods) };
       return { tier: 'optin', out: 'NeuroidAssembly',
-        need: `reads only the ${adapterMods.join('/')} track, and only via ${adapterNeed(adapterMods[0])}` };
+        need: `reads only the ${adapterMods.join('/')} channel, and only via ${adapterNeed(adapterMods[0])}` };
     }
     if (directMods.length) return { tier: 'routes', out: 'NeuroidAssembly' };
     return { tier: 'optin', out: 'NeuroidAssembly', need: `needs ${adapterNeed(inMods[0])}` };
@@ -207,7 +216,7 @@
     const via = C.generation ? 'generation' : 'readout';
     if (inMods.length > 1) {   // movie: covers only part of the multimodal input
       if (directMods.length) return { tier: 'partial', out: 'BehavioralAssembly', via, need: partialNeed(inMods, directMods) };
-      return { tier: 'optin', out: 'BehavioralAssembly', via, need: `reads only the ${adapterMods.join('/')} track via ${adapterNeed(adapterMods[0])}` };
+      return { tier: 'optin', out: 'BehavioralAssembly', via, need: `reads only the ${adapterMods.join('/')} channel via ${adapterNeed(adapterMods[0])}` };
     }
     if (directMods.length) return { tier: 'routes', out: 'BehavioralAssembly', via };
     return { tier: 'optin', out: 'BehavioralAssembly', via, need: `needs ${adapterNeed(inMods[0])}` };
@@ -215,20 +224,20 @@
 
   function route(model, input, task, multiModality) {
     const C = model.has;
-    const procStep = S('event', 'process(input_event)', `you hand the model a ${input.event}`, 'Subject.process');
+    const procStep = S('event', 'interact(session)', `the session sends in a ${channelLabel(input)} event`, 'Subject.interact');
 
     // 1 — StateChange (lesion / perturbation)
     if (input.event === 'StateChange') {
       if (!C.state_change) {
         return err('NotImplementedError',
           `'${model.name}' has no state_change_fn registered, so it can't be lesioned/perturbed.`,
-          [procStep, S('decision', 'isinstance(StateChange)', 'routes to state_change_fn — but none is registered')]);
+          [procStep, S('decision', 'route lesion:{addr} channel', 'routes to state_change_fn — but none is registered')]);
       }
       return ok([
         procStep,
-        S('decision', 'isinstance(StateChange) → state_change_fn', 'first dispatch branch'),
+        S('decision', 'route lesion:{addr} channel → state_change_fn', 'first channel-routing branch'),
         S('fn', 'state_change_fn(state_change)', 'resolve Selection (which units) → apply Perturbation (zero / scale / replace)', 'BrainScoreModel.state_change_fn'),
-        S('output', 'PerturbationApplied', 'carries a handle_id; process(StateChange(kind="reset", handle_id=…)) restores bit-for-bit')
+        S('output', 'PerturbationApplied', 'emitted on the lesion:{addr} channel with a handle_id; apply_state_change(subject, StateChange(kind="reset", handle_id=…)) restores bit-for-bit')
       ], 'PerturbationApplied', 'Yeatman2021-induced_dyslexia (lesion the word-form units)', model);
     }
 
@@ -237,17 +246,17 @@
       if (!C.action) {
         return err('NotImplementedError',
           `'${model.name}' has no action_fn registered; embodied evaluation needs action_fn(env_step) -> EnvironmentResponse.`,
-          [procStep, S('decision', 'isinstance(EnvironmentStep)', 'routes to action_fn — but none is registered')]);
+          [procStep, S('decision', 'route vision + proprioception channels', 'routes to action_fn — but none is registered')]);
       }
       return ok([
         procStep,
-        S('decision', 'isinstance(EnvironmentStep) → action_fn', 'embodied dispatch branch'),
+        S('decision', 'route vision + proprioception channels → action_fn', 'embodied channel-routing branch'),
         S('fn', 'action_fn(env_step)', 'see the rendered frame + legal actions, reason, pick a move', 'BrainScoreModel.action_fn'),
-        S('output', 'EnvironmentResponse', 'action index fed back to the env; loop repeats (no reset between ticks)')
+        S('output', 'EnvironmentResponse', 'emitted on the motor channel; the action index is fed back to the env; loop repeats (no reset between ticks)')
       ], 'EnvironmentResponse', 'GridGame-reach / MiniGrid (closed-loop)', model);
     }
 
-    // 3 — perceptual input (StimulusSet / MultimodalStimulusSet)
+    // 3 — perceptual input channels (StimulusSet / MultimodalStimulusSet)
     const inMods = Array.isArray(input.modality) ? input.modality : [input.modality];
     const supported = inMods.filter(m => consumes(model, m));
 
@@ -260,15 +269,15 @@
       }
       if (supported.length === 0) {
         return err('CompatibilityError',
-          `pre-flight check_compatibility fails: this input is {${inMods.join(', ')}} but the model only reads {${model.available.join(', ')}}.`,
+          `pre-flight check_compatibility fails: this input channel is {${inMods.join(', ')}} but the subject only reads {${model.available.join(', ')}}.`,
           [procStep, S('decision', 'check_compatibility()', 'required modality ⊄ model.available')]);
       }
       return ok([
         procStep,
         S('check', 'check_compatibility() · check_memory()', 'pre-flight: modality/region subset, then extraction probe + metric-memory estimate'),
         S('decision', '_use_generation_for_task & instruction present', 'generation wins (prefer_path="auto")'),
-        S('fn', '_generate_predictions(stimuli)', `read the ${pickByPriority(supported)} column → generation_fn(row, instruction, label_set) → parse a label`, 'BrainScoreModel._generate_predictions'),
-        S('output', 'BehavioralAssembly', 'one-hot over label_set per stimulus')
+        S('fn', '_generate_predictions(stimuli)', `read the ${pickByPriority(supported)} channel → generation_fn(row, instruction, label_set) → parse a label`, 'BrainScoreModel._generate_predictions'),
+        S('output', 'BehavioralAssembly', 'emitted on the behavior channel; one-hot over label_set per stimulus')
       ], 'BehavioralAssembly', 'ROAR / Yeatman2021 (generation) · Rajalingham 2-AFC', model);
     }
 
@@ -282,7 +291,7 @@
       }
       if (supported.length === 0) {
         return err('CompatibilityError',
-          `pre-flight check_compatibility fails: input {${inMods.join(', ')}} ⊄ model {${model.available.join(', ')}}.`,
+          `pre-flight check_compatibility fails: input channel {${inMods.join(', ')}} ⊄ subject {${model.available.join(', ')}}.`,
           [procStep]);
       }
       const m = pickByPriority(supported);
@@ -292,7 +301,7 @@
         S('check', 'check_compatibility() · check_memory()', 'pre-flight'),
         S('decision', 'fitting_stimuli present → fit a readout head', 'any open-weight model: logistic head on a chosen layer'),
         S('fn', '_predict_probabilities(stimuli)', `preprocessors['${rTower}']${adaptNote(m, rTower)} → activations_model at the readout layer → fitted logistic head`, 'BrainScoreModel._predict_probabilities'),
-        S('output', 'BehavioralAssembly', 'probabilities over label_set')
+        S('output', 'BehavioralAssembly', 'emitted on the behavior channel; probabilities over label_set')
       ], 'BehavioralAssembly', 'ROAR / Yeatman2021 (readout)', model);
     }
 
@@ -314,12 +323,12 @@
       procStep,
       S('check', 'check_compatibility() · check_memory()', 'pre-flight: modality+region subset, then extraction probe + metric-memory estimate'),
       S('decision', `_detect_modalities() → {${inMods.join(', ')}}`,
-        useMulti ? `multi_modality=True → fan out to every supported tower {${towers.join(', ')}}`
+        useMulti ? `multiple input channels → fan out to every supported tower {${towers.join(', ')}}`
                  : (supported.length > 1
-                     ? `single-modality dispatch → MODALITY_PRIORITY (vision, text, audio, video) picks "${towers[0]}"; set multi_modality=True to use all of {${supported.join(', ')}}`
+                     ? `single-channel routing → MODALITY_PRIORITY (vision, text, audio, video) picks "${towers[0]}"; enable multiple input channels to use all of {${supported.join(', ')}}`
                      : (inMods.length > 1
-                         ? `model has a tower only for "${supported[0]}"; reads that track, ignores the rest`
-                         : 'single modality')))
+                         ? `subject has a tower only for "${supported[0]}"; reads that channel, ignores the rest`
+                         : 'single channel')))
     ];
     towers.forEach((mod, idx) => {
       const tower = towerFor(model, mod);
@@ -332,8 +341,8 @@
         wrapperName));
     });
     steps.push(S('output', 'NeuroidAssembly',
-      useMulti ? '(presentation, neuroid) — concat across towers with a per-neuroid modality coord'
-               : '(presentation, neuroid) with layer (+ region) coords'));
+      useMulti ? 'neural:{region} channels — (presentation, neuroid), concat across towers with a per-neuroid modality coord'
+               : 'neural:{region} channel — (presentation, neuroid) with layer (+ region) coords'));
 
     const benchName = useMulti ? 'Algonauts2025 / Lahner multimodal (banded ridge over towers)'
       : (input.id === 'movie' ? `${NEURAL_BENCH[towers[0]]} — only the "${towers[0]}" tower ran` : NEURAL_BENCH[towers[0]]);
@@ -356,56 +365,54 @@
     const modelRegion = model.available.length ? (REGION_FOR[pickByPriority(model.available)] || 'IT') : 'IT';
 
     if (input.event === 'StateChange') {
-      if (!result.ok) return `m = load_model(${id})\n` +
-        `m.process(StateChange(target=sel, perturbation=Perturbation('zero')))   # -> ${result.etype}`;
-      return `m = load_model(${id})   # state_change_fn wired\n` +
-        `handle = m.process(StateChange(target=sel, perturbation=Perturbation('zero')))\n` +
-        `# … observe the deficit … then restore bit-for-bit:\n` +
-        `m.process(StateChange(kind='reset', handle_id=handle.handle_id))`;
+      if (!result.ok) return `subject = load_model(${id})\n` +
+        `apply_state_change(subject, StateChange(target=sel, perturbation=Perturbation('zero')))   # -> ${result.etype}`;
+      return `subject = load_model(${id})   # state_change_fn wired\n` +
+        `handle = apply_state_change(subject, StateChange(target=sel, perturbation=Perturbation('zero')))\n` +
+        `# … observe the deficit on the lesion:<addr> channel … then restore bit-for-bit:\n` +
+        `apply_state_change(subject, StateChange(kind='reset', handle_id=handle.handle_id))`;
     }
     if (input.event === 'EnvironmentStep') {
-      if (!result.ok) return `m = load_model(${id})\n` +
-        `m.process(EnvironmentStep(observation=obs, step_num=t))   # -> ${result.etype}`;
-      return `m = load_model(${id})   # action_fn wired\n` +
-        `resp = m.process(EnvironmentStep(observation=obs, step_num=t))\n` +
-        `env.step(int(resp.action))   # closed loop, no reset between ticks`;
+      if (!result.ok) return `subject = load_model(${id})\n` +
+        `run_environment(subject, env)   # -> ${result.etype}`;
+      return `subject = load_model(${id})   # action_fn wired\n` +
+        `responses = run_environment(subject, env)   # closed-loop session: vision + proprioception in, motor (EnvironmentResponse) out`;
     }
     if (task === 'generation') {
-      if (!result.ok) return `m = load_model(${id})\n` +
-        `m.start_task(TaskContext(task_type='probabilities', instruction='…', label_set=[...]))\n` +
-        `m.process(${stimVar})   # -> ${result.etype}`;
-      return `m = load_model(${id})   # generation_fn wired\n` +
-        `m.start_task(TaskContext(task_type='probabilities',\n` +
-        `                         instruction='Which category?', label_set=[...]))\n` +
-        `assembly = m.process(${stimVar})   # -> BehavioralAssembly (a label per stimulus)`;
+      if (!result.ok) return `subject = load_model(${id})\n` +
+        `task = TaskContext(task_type='probabilities', instruction='…', label_set=[...])\n` +
+        `score_behavior(subject, task)   # -> ${result.etype}`;
+      return `subject = load_model(${id})   # generation_fn wired\n` +
+        `task = TaskContext(task_type='probabilities',\n` +
+        `                   instruction='Which category?', label_set=[...])\n` +
+        `assembly = score_behavior(subject, task)   # -> behavior channel: BehavioralAssembly (a label per stimulus)`;
     }
     if (task === 'readout') {
-      if (!result.ok) return `m = load_model(${id})\n` +
-        `m.start_task(TaskContext(task_type='probabilities', fitting_stimuli=train))\n` +
-        `m.process(${stimVar})   # -> ${result.etype}`;
-      return `m = load_model(${id})\n` +
-        `m.start_task(TaskContext(task_type='probabilities', fitting_stimuli=train))\n` +
-        `assembly = m.process(${stimVar})   # -> BehavioralAssembly (logistic head fit on a layer)`;
+      if (!result.ok) return `subject = load_model(${id})\n` +
+        `task = TaskContext(task_type='probabilities', fitting_stimuli=train)\n` +
+        `score_behavior(subject, task)   # -> ${result.etype}`;
+      return `subject = load_model(${id})\n` +
+        `task = TaskContext(task_type='probabilities', fitting_stimuli=train)\n` +
+        `assembly = score_behavior(subject, task)   # -> behavior channel: BehavioralAssembly (logistic head fit on a layer)`;
     }
     // neural encoding
-    if (!result.ok) return `m = load_model(${id})\n` +
-      `m.start_recording('${modelRegion}')\n` +
-      `m.process(${stimVar})   # -> ${result.etype}`;
+    if (!result.ok) return `subject = load_model(${id})\n` +
+      `score_stimuli(subject, ${stimVar}, record='${modelRegion}')   # -> ${result.etype}`;
     if (state.multi && supported.length > 1) {
       const regs = [...new Set(supported.map(m => REGION_FOR[m] || 'IT'))];
-      return `m = load_model(${id})   # region_modality_map routes each region to its tower\n` +
-        `m.start_recording([${regs.map(r => `'${r}'`).join(', ')}])\n` +
-        `assembly = m.process(${stimVar}, multi_modality=True)   # -> NeuroidAssembly (${supported.join(' + ')} towers)`;
+      return `subject = load_model(${id})   # region_modality_map routes each region to its tower\n` +
+        `assembly = score_stimuli(subject, ${stimVar},\n` +
+        `                         record=[${regs.map(r => `'${r}'`).join(', ')}],\n` +
+        `                         channels=[${supported.map(m => `'${m}'`).join(', ')}])   # multiple input channels -> NeuroidAssembly on neural:{region} (${supported.join(' + ')} towers)`;
     }
     const runMod = supported.length ? pickByPriority(supported) : inMods[0];
     const rt = towerFor(model, runMod);
     let note;
-    if (input.id === 'movie') note = `   # ${model.name} reads only the ${runMod} track of the movie`;
+    if (input.id === 'movie') note = `   # ${model.name} reads only the ${runMod} channel of the movie`;
     else if (runMod !== rt) note = `   # ${runMod === 'vision' ? 'still fed as a 1-frame clip' : 'frames sampled from the clip'} -> NeuroidAssembly`;
-    else note = `   # -> NeuroidAssembly`;
-    return `m = load_model(${id})\n` +
-      `m.start_recording('${REGION_FOR[runMod] || 'IT'}')\n` +
-      `assembly = m.process(${stimVar})${note}`;
+    else note = `   # -> neural:${REGION_FOR[runMod] || 'IT'} channel (NeuroidAssembly)`;
+    return `subject = load_model(${id})\n` +
+      `assembly = score_stimuli(subject, ${stimVar}, record='${REGION_FOR[runMod] || 'IT'}')${note}`;
   }
 
   // ============================ rendering ============================
@@ -455,7 +462,7 @@
     const iWrap = $('#arch-inputs'); iWrap.innerHTML = '';
     INPUTS.forEach(inp => {
       const b = el('button', 'arch-chip' + (inp.id === state.input ? ' on' : ''),
-        `<b>${inp.name}</b><span>${inp.event}</span>`);
+        `<b>${inp.name}</b><span>${channelLabel(inp)}</span>`);
       b.onclick = () => { state.input = inp.id; state.multi = defaultMulti(MODELS.find(m => m.id === state.model), inp); renderAll(); };
       iWrap.appendChild(b);
     });
@@ -484,8 +491,8 @@
     const task = input.perceptual ? state.task : null;
     const result = route(model, input, task, state.multi);
 
-    // The interactive router shows the HONEST current dispatch — routes to an OutputEvent, or the
-    // real exception. (What ELSE is theoretically routable lives in the matrix, not here.)
+    // The interactive router shows the HONEST current channel routing — resolves to an output channel,
+    // or the real exception. (What ELSE is theoretically routable lives in the matrix, not here.)
     const v = $('#arch-verdict');
     if (result.ok) {
       // honest caveat: cross-visual runs through an adapter; a movie runs on only one channel
@@ -554,7 +561,7 @@
       html += `<tr><th>${m.name}</th>`;
       INPUTS.forEach(inp => {
         if (inp.perceptual) {
-          // two reachable outputs: neural encoding (top) and behavior (bottom)
+          // two reachable output channels: neural encoding (top) and behavior (bottom)
           const nc = capability(m, inp), bc = behavioralCap(m, inp);
           html += `<td class="cm-multi" data-m="${m.id}" data-i="${inp.id}">` +
             `<div class="mc">${pill(nc)}</div><div class="mc">${pill(bc)}</div></td>`;

@@ -41,16 +41,17 @@
 
 <section id="api" data-toc="The API" data-order="5" data-tier="api" class="section api-band">
   <p class="act-eyebrow">For builders · the contract</p>
-  <h2>One method, every plugin</h2>
-  <p class="lead">Every model is one registration, evaluated through a single call:
-    <code>process(input) → output</code>. The input you hand it decides the test; the output
-    type follows from it. Five plugin seams (model, benchmark, metric, data, stimulus-set) plus
-    one new capability seam are all you ever extend.</p>
+  <h2>One method, every kind of test</h2>
+  <p class="lead">Every subject — a model, or in principle a human — is evaluated through a single
+    method: <code>interact(session)</code>. It exchanges information over named <b>channels</b>; the
+    channels you send in decide the test, and the channels it sends back are the result. A registry
+    documents every allowable input and output, so a new sense, readout, or device is a new channel,
+    never a new method.</p>
   <div class="api-cols">
-    <div><b>Inputs</b><br>image · text · audio · video · mixed senses · a step in a game · a lesion</div>
-    <div><b>Outputs</b><br>a brain response · a behavioral choice · an action · a generated answer</div>
+    <div><b>Input channels</b><br>vision · text · audio · video · a step in a world · a lesion or stimulation</div>
+    <div><b>Output channels</b><br>a brain response · a behavioral choice · an action · pupil / skin response</div>
   </div>
-  <p class="muted small">Full routing, the input/output unions, the wrappers, and the file
+  <p class="muted small">The full contract, the channels, the wrappers, and the file
     layout: <a href="architecture.html">the Architecture page →</a></p>
 </section>
 
@@ -81,6 +82,32 @@
     <h3>Capability status</h3>
     <p class="muted small" id="capability-status-note"></p>
     <table class="nulls-table status-table" id="capability-status-table"></table>
+  </div>
+</section>
+
+<section id="frontier" data-toc="What it opens up" data-order="15" data-tier="act1" class="section alt">
+  <h2>What one shared interface opens up</h2>
+  <p class="lead">Because every subject is just something that exchanges information over channels,
+    the same setup reaches past today's models. These are on the horizon — expressible through the
+    interface, shown here as direction, not yet as scored results.</p>
+  <div class="cap-grid">
+    <div class="cap-card"><div class="tag">on the horizon</div>
+      <h3>A model, or a person</h3>
+      <p>The interface never assumes the subject is a model. Present the same input on a screen and
+        record from electrodes, and a person meets the same contract — so a test can, in principle,
+        run on either.</p></div>
+    <div class="cap-card"><div class="tag">on the horizon</div>
+      <h3>Reading and writing to the brain</h3>
+      <p>Recording is one direction; stimulation is the other. The same machinery that reads a region
+        can drive it — the basis for testing decoders and sensory implants.</p></div>
+    <div class="cap-card"><div class="tag">on the horizon</div>
+      <h3>More than one subject at once</h3>
+      <p>Several subjects can share one session, one's output becoming another's input — the opening
+        for studying interaction between two models, or between a model and a person.</p></div>
+    <div class="cap-card"><div class="tag">on the horizon</div>
+      <h3>Body signals, not just choices</h3>
+      <p>Behavior isn't only button presses. Pupil size and skin response are readouts on their own
+        channels, so physiological measures sit beside the neural and behavioral ones.</p></div>
   </div>
 </section>
 

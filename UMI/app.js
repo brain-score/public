@@ -31,7 +31,7 @@
   // ---- hero: swipe through registrations to show the call is invariant ----
   // Most entries share one skeleton (only the model/benchmark/comment change);
   // the embodied and perturbation entries carry their own `lines` because they
-  // run through a different process() variant; that contrast IS the point.
+  // run through a different helper (run_environment / apply_state_change); that contrast IS the point.
   (function () {
     const rot = D.hero_rotation;
     const body = $('hero-code-body');
