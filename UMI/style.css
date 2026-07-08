@@ -71,8 +71,7 @@ section.dd-collapsed{padding-top:40px; padding-bottom:40px}
   radial-gradient(1100px 500px at 70% -10%, rgba(124,77,255,.10), transparent 60%),
   radial-gradient(900px 480px at 10% 0%, rgba(47,107,255,.10), transparent 55%), var(--bg)}
 .hero-inner{max-width:1000px; margin:0 auto}
-.hero h1{font-size:3.4rem; margin:0 0 14px; background:linear-gradient(90deg,#1b2333,#2f6bff);
-  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent}
+.hero h1{font-size:3.4rem; margin:0 0 14px; color:var(--ink)}
 .sub{font-size:1.2rem; color:var(--muted); max-width:720px; margin:0 0 22px}
 .pill-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:26px}
 .pill{font-size:.8rem; color:#2f5bd0; background:rgba(47,107,255,.10);
