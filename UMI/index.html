@@ -3,591 +3,564 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Brain-Score · Unified Model Interface</title>
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
-<link rel="stylesheet" href="style.css?v=22" />
+<title>Brain-Score &middot; Unified Model Interface</title>
+<style>
+  :root{
+    --ground:#F6F7F9; --panel:#FFFFFF; --ink:#151A21; --muted:#616B7A; --faint:#8A94A3;
+    --line:#E3E7ED;
+    --legacy:#B26B3B; --legacy-tint:#FBF6EF; --legacy-line:#EBDCCB;
+    --umi:#0E766B; --umi-tint:#ECF6F4; --umi-line:#C9E6E0;
+    --slate:#33414F;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Cascadia Code",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+    font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  code,.mono{font-family:var(--mono);font-size:.86em;}
+
+  /* ---- site nav ---- */
+  .site-nav{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;
+    gap:16px;padding:13px 32px;background:rgba(246,247,249,.82);
+    -webkit-backdrop-filter:saturate(1.4) blur(10px);backdrop-filter:saturate(1.4) blur(10px);
+    border-bottom:1px solid var(--line);}
+  .site-brand{font-size:15px;font-weight:750;letter-spacing:-.01em;color:var(--ink);text-decoration:none;}
+  .site-brand .d{color:var(--umi);margin:0 5px;} .site-brand .m{color:var(--faint);font-weight:600;}
+  .site-links{display:flex;align-items:center;gap:2px;flex-wrap:wrap;}
+  .site-links a{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:8px;}
+  .site-links a:hover{color:var(--ink);background:rgba(20,24,33,.05);}
+  .site-links a.ext{color:var(--umi);}
+  .site-links a:focus-visible,.site-brand:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:48px 32px 84px;}
+
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
+    font-weight:600;margin:0 0 14px;}
+  h1{font-size:clamp(30px,4.6vw,46px);line-height:1.06;letter-spacing:-.024em;font-weight:750;
+    margin:0 0 18px;text-wrap:balance;max-width:24ch;}
+  .lede{font-size:clamp(16px,1.8vw,19px);color:var(--muted);max-width:66ch;margin:0;line-height:1.5;}
+  .lede strong{color:var(--ink);font-weight:600;}
+
+  .cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px;}
+  .btn{font-size:14.5px;font-weight:600;text-decoration:none;padding:12px 20px;border-radius:10px;
+    display:inline-flex;align-items:center;gap:7px;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease;}
+  .btn-primary{background:var(--umi);color:#fff;box-shadow:0 1px 2px rgba(14,118,107,.3);}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 7px 20px rgba(14,118,107,.24);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--umi-line);color:var(--umi);transform:translateY(-1px);}
+  .btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+
+  .rule{height:1px;background:var(--line);border:0;margin:52px 0;}
+  h2{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);
+    font-weight:650;margin:0 0 22px;}
+
+  /* ---- the two panels ---- */
+  .panes{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:stretch;}
+  .pane{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    display:flex;flex-direction:column;}
+  .pane-head{padding:16px 22px 15px;border-bottom:1px solid var(--line);}
+  .pane-tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+    display:inline-flex;align-items:center;gap:8px;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .pane--legacy .dot{background:var(--legacy);} .pane--umi .dot{background:var(--umi);}
+  .pane--legacy .pane-tag{color:var(--legacy);} .pane--umi .pane-tag{color:var(--umi);}
+  .pane-title{font-size:18px;font-weight:680;letter-spacing:-.01em;margin:9px 0 0;}
+  .pane-body{padding:22px 22px 20px;flex:1;display:flex;flex-direction:column;gap:9px;}
+
+  .io-box{border:1px solid var(--line);border-radius:11px;overflow:hidden;}
+  .io-head{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:750;padding:7px 14px;}
+  .io-content{padding:12px 15px;font-size:14px;color:var(--ink);line-height:1.45;}
+  .io-content .sub{color:var(--muted);font-size:12.5px;display:block;margin-top:4px;}
+  .io-content .chan{font-family:var(--mono);font-size:12.5px;}
+  .pane--legacy .io-head{background:var(--legacy-tint);color:#8a541f;}
+  .pane--legacy .io-content .chan{color:#8a541f;}
+  .pane--umi .io-head{background:var(--umi-tint);color:#0a5b52;}
+  .pane--umi .io-content .chan{color:#0a5b52;}
+
+  .chev{align-self:center;color:var(--faint);font-size:16px;line-height:1;}
+  .calls{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;}
+  .chip{font-family:var(--mono);font-size:12px;padding:5px 9px;border-radius:7px;
+    border:1px solid var(--legacy-line);background:var(--legacy-tint);color:#7d4a22;white-space:nowrap;}
+  .pane--umi .chip{border-color:var(--umi-line);background:var(--umi-tint);color:#0a5b52;}
+  .chip--solo{font-size:13px;padding:7px 14px;font-weight:600;}
+  .mid-note{text-align:center;font-size:12px;color:var(--faint);margin:-1px 0 1px;}
+
+  .node{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff;text-align:center;}
+  .node .role{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);
+    font-weight:650;display:block;margin-bottom:3px;}
+  .node .name{font-weight:600;font-size:15px;}
+  .node .name small{font-family:var(--mono);font-weight:500;color:var(--muted);font-size:12px;}
+  .pane--legacy .node{border-color:var(--legacy-line);}
+  .pane--umi .node{border-color:var(--umi-line);background:linear-gradient(0deg,var(--umi-tint),#fff);}
+
+  .pane-note{font-size:13.5px;color:var(--muted);line-height:1.48;margin:8px 4px 0;}
+  .pane-note b{color:var(--ink);font-weight:600;}
+
+  /* ---- streaming visual ---- */
+  .stream-intro{font-size:16px;color:var(--muted);max-width:74ch;margin:0 0 22px;line-height:1.55;}
+  .stream-intro b{color:var(--ink);font-weight:600;}
+  .stream-intro code{color:var(--umi);}
+
+  .modeswitch{display:inline-flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:11px;
+    background:#fff;margin-bottom:18px;}
+  .modeswitch button{font-family:inherit;font-size:13px;font-weight:600;padding:8px 15px;border:0;
+    border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;transition:background .15s,color .15s;}
+  .modeswitch button:hover{color:var(--ink);}
+  .modeswitch button[data-mode="stream"].active{background:var(--umi);color:#fff;}
+  .modeswitch button[data-mode="batch"].active{background:var(--legacy);color:#fff;}
+  .modeswitch button:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+
+  .scope{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px 18px;}
+  .scope-side{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+    color:var(--faint);margin:0 0 10px;display:flex;justify-content:space-between;align-items:baseline;}
+  .scope-side .live{color:var(--umi);display:inline-flex;align-items:center;gap:7px;}
+  .scope-side .oneshot{color:var(--legacy);}
+  .blip{width:8px;height:8px;border-radius:50%;background:var(--umi);
+    box-shadow:0 0 0 0 rgba(14,118,107,.5);animation:pulse 1.8s ease-out infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(14,118,107,.45)}70%{box-shadow:0 0 0 7px rgba(14,118,107,0)}100%{box-shadow:0 0 0 0 rgba(14,118,107,0)}}
+
+  .lane{display:grid;grid-template-columns:120px 1fr;align-items:center;gap:12px;height:34px;}
+  .lane-lab{font-family:var(--mono);font-size:12px;text-align:right;white-space:nowrap;color:#0a5b52;}
+  .track{position:relative;height:22px;overflow:hidden;border-radius:6px;
+    -webkit-mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
+            mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);}
+  .track::before{content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(90deg,transparent 0 46px,rgba(20,24,33,.05) 46px 47px);}
+  .flow-dots{display:flex;width:max-content;height:100%;align-items:center;
+    animation:drift var(--spd,18s) linear infinite;}
+  .dots{display:flex;align-items:center;}
+  .ev{flex:0 0 auto;height:11px;border-radius:5px;}
+  .lanes.in .ev{background:#63b7ac;} .lanes.out .ev{background:#14867a;}
+  .lanes.out .flow-dots{animation-direction:reverse;}
+  @keyframes drift{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  .batch-bar{position:absolute;inset:0;border-radius:6px;}
+  .lanes.in .batch-bar{background:rgba(99,183,172,.55);}
+  .lanes.out .batch-bar{background:rgba(20,134,122,.5);}
+
+  .spine{display:flex;align-items:center;justify-content:center;gap:14px;
+    margin:14px 0;padding:10px 0;border-top:1px dashed var(--umi-line);border-bottom:1px dashed var(--umi-line);}
+  .spine .pill{font-family:var(--mono);font-size:13px;font-weight:600;color:#0a5b52;
+    background:var(--umi-tint);border:1px solid var(--umi-line);border-radius:8px;padding:7px 14px;white-space:nowrap;}
+  .spine .arm{font-size:11.5px;color:var(--faint);white-space:nowrap;}
+  .spine .arm code{color:var(--umi);}
+  .spine.batch-spine{border-color:var(--legacy-line);}
+  .spine .legacy-pill{color:#7d4a22;background:var(--legacy-tint);border-color:var(--legacy-line);}
+
+  .axis{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:center;margin-top:12px;}
+  .axis .aline{position:relative;height:1px;background:var(--line);}
+  .axis .aline::after{content:"";position:absolute;right:-1px;top:-3px;border:4px solid transparent;
+    border-left-color:var(--faint);}
+  .axis .atk{position:absolute;top:-3px;width:1px;height:7px;background:var(--line);}
+  .axis .albl{position:absolute;top:8px;font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums;
+    transform:translateX(-50%);}
+  .axis .acap{grid-column:2;font-size:11px;color:var(--faint);text-align:right;margin-top:2px;}
+  .axis-batch{display:grid;grid-template-columns:120px 1fr;gap:12px;margin-top:14px;}
+  .axis-batch .noaxis{grid-column:2;font-size:11.5px;color:var(--legacy);text-align:center;
+    letter-spacing:.04em;padding:5px 0;border-top:1px dashed var(--legacy-line);}
+
+  .stream-cap{font-size:13.5px;color:var(--muted);margin:18px 4px 0;}
+  .stream-cap b{color:var(--ink);font-weight:600;}
+  .stream-cap code{color:var(--umi);}
+
+  /* mode visibility (wrapper carries is-stream / is-batch) */
+  .smode.is-stream .only-batch{display:none;}
+  .smode.is-batch .only-stream{display:none;}
+  .smode.is-batch .flow-dots{display:none;}
+  .smode.is-stream .batch-bar{display:none;}
+  .smode.is-batch .track::before{display:none;}
+  .smode.is-batch .track{-webkit-mask:none;mask:none;}
+
+  /* ---- unchanged band ---- */
+  .band{background:var(--slate);color:#EAEEF2;border-radius:14px;padding:26px 30px;
+    display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;}
+  .band .k{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;
+    color:#9FB0C0;white-space:nowrap;line-height:1.3;}
+  .band p{margin:0;font-size:15.5px;line-height:1.55;color:#D5DCE4;max-width:78ch;}
+  .band p b{color:#fff;font-weight:650;}
+  .band code{color:#B9E7DF;background:rgba(255,255,255,.07);padding:1px 5px;border-radius:5px;}
+
+  .concrete{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--umi);
+    border-radius:12px;padding:20px 24px;margin-top:20px;}
+  .concrete p{margin:0;font-size:15.5px;line-height:1.6;color:var(--ink);}
+  .concrete p .m{font-family:var(--mono);font-size:.86em;color:var(--umi);}
+  .concrete .after{color:var(--muted);font-size:14px;margin-top:10px;}
+  .concrete .after b{color:var(--legacy);font-weight:600;}
+
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#fff;}
+  table{border-collapse:collapse;width:100%;min-width:680px;font-size:14.5px;}
+  th,td{text-align:left;padding:13px 18px;vertical-align:top;border-bottom:1px solid var(--line);}
+  thead th{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);
+    font-weight:700;background:#FBFCFD;}
+  tbody tr:last-child td{border-bottom:0;}
+  td.term{white-space:nowrap;} td.term code{color:var(--umi);font-weight:600;}
+  td.plain{color:var(--ink);} td.old{color:var(--muted);}
+  td.old code{color:var(--legacy);} td.old .none{color:var(--legacy);font-style:italic;font-family:var(--sans);}
+
+  .unlocks{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .u{background:#fff;border:1px solid var(--line);border-radius:12px;padding:19px 20px 17px;}
+  .u h3{margin:0 0 7px;font-size:15px;font-weight:650;letter-spacing:-.005em;}
+  .u p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.5;}
+  .u .u-mark{font-family:var(--mono);font-size:12px;color:var(--umi);font-weight:600;
+    display:block;margin-bottom:9px;}
+
+  footer{margin-top:54px;font-size:12.5px;color:var(--faint);line-height:1.55;max-width:82ch;}
+  footer code{color:var(--muted);}
+
+  .fade{opacity:0;transform:translateY(8px);animation:rise .6s ease forwards;}
+  .fade.d1{animation-delay:.06s}.fade.d2{animation-delay:.12s}
+  @keyframes rise{to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){
+    .fade{animation:none;opacity:1;transform:none}
+    .flow-dots{animation:none}
+    .blip{animation:none}
+    .btn:hover,.btn-ghost:hover,.btn-primary:hover{transform:none}
+  }
+
+  @media (max-width:860px){
+    .site-nav{padding:11px 18px;}
+    .panes{grid-template-columns:1fr;}
+    .band{grid-template-columns:1fr;gap:12px;}
+    .unlocks{grid-template-columns:1fr;}
+    .wrap{padding:34px 20px 64px;}
+    .lane,.axis,.axis-batch{grid-template-columns:86px 1fr;}
+    .lane-lab{font-size:11px;}
+    .spine{flex-wrap:wrap;}
+  }
+</style>
 </head>
 <body>
-<nav class="nav">
-  <div class="brand">Brain-Score<span class="dot">·</span><span class="muted">Unified</span></div>
-  <div class="aud-bar" id="aud-bar">
-    <span class="aud-label">View for:</span>
-    <button class="aud-btn" data-aud="executive">Executive</button>
-    <button class="aud-btn" data-aud="board">Advisory Board</button>
-    <button class="aud-btn" data-aud="technical">Technical</button>
-    <a class="aud-btn arch-link" href="architecture.html" style="margin-left:10px">Architecture →</a>
+
+<nav class="site-nav">
+  <a class="site-brand" href="index.html">Brain-Score<span class="d">&middot;</span><span class="m">Unified</span></a>
+  <div class="site-links">
+    <a href="overview.html">Overview</a>
+    <a href="architecture.html">Architecture</a>
+    <a class="ext" href="https://www.brain-score.org" target="_blank" rel="noopener">Leaderboard &#8599;</a>
   </div>
 </nav>
 
-<aside class="toc" id="toc">
-  <div class="toc-head">On this page</div>
-  <div class="links" id="nav-links"></div>
-</aside>
+<div class="wrap">
 
-<header class="hero">
-  <div class="hero-inner">
-    <h1 id="hero-title">Brain-Score, unified.</h1>
-    <p id="hero-sub" class="sub"></p>
-    <div class="pill-row">
-      <span class="pill">seeing</span><span class="pill">reading</span>
-      <span class="pill">hearing</span><span class="pill">video</span>
-      <span class="pill">mixed senses</span><span class="pill">lesioning</span>
-      <span class="pill">acting</span>
+  <header class="fade">
+    <p class="eyebrow">Brain-Score &middot; Unified Model Interface</p>
+    <h1>What actually changes &mdash; and what doesn&rsquo;t</h1>
+    <p class="lede">The Unified Model Interface (UMI) changes <strong>how a benchmark talks to a model</strong>.
+      It does not change the models, the data, the metrics, or the scores. Here is the difference,
+      without the vocabulary.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="overview.html">Read the overview &rarr;</a>
+      <a class="btn btn-ghost" href="architecture.html">See the architecture &rarr;</a>
     </div>
-    <pre class="code hero-code"><code id="hero-code-body" class="hero-swap"></code></pre>
-    <p id="hero-note" class="note"></p>
-  </div>
-</header>
+  </header>
 
-<section id="api" data-toc="The API" data-order="5" data-tier="api" class="section api-band">
-  <p class="act-eyebrow">For builders · the contract</p>
-  <h2>One method, every kind of test</h2>
-  <p class="lead">Every subject — a model, or in principle a human — is evaluated through a single
-    method: <code>interact(session)</code>. It exchanges information over named <b>channels</b>; the
-    channels you send in decide the test, and the channels it sends back are the result. A registry
-    documents every allowable input and output, so a new sense, readout, or device is a new channel,
-    never a new method.</p>
-  <div class="api-cols">
-    <div><b>Input channels</b><br>vision · text · audio · video · a step in a world · a lesion or stimulation</div>
-    <div><b>Output channels</b><br>a brain response · a behavioral choice · an action · pupil / skin response</div>
-  </div>
-  <p class="muted small">The full contract, the channels, the wrappers, and the file
-    layout: <a href="architecture.html">the Architecture page →</a></p>
-</section>
+  <hr class="rule">
 
-<section id="act-ask" data-toc="What you can ask" data-order="8" data-tier="act1" class="act-band">
-  <p class="act-eyebrow">Act 1 · for everyone</p>
-  <h2 class="act-h">What can you ask a model?</h2>
-  <p class="act-lead">One hand-off, an escalating set of questions: predict the brain, match a
-    behavior, act in a world, and intervene on the model itself — each shown with its score.</p>
-</section>
+  <section class="fade d1">
+    <h2>How a benchmark evaluates a model</h2>
+    <div class="panes">
 
-<section id="act-science" data-toc="The science" data-order="100" data-tier="act2" class="act-band">
-  <p class="act-eyebrow">Act 2 · for the scientific reader</p>
-  <h2 class="act-h">Are the scores meaningful — and what's interesting?</h2>
-  <p class="act-lead">The same capabilities, examined: scores compared across methods, every
-    result checked against a deliberately-broken baseline, and tools to watch a model think.</p>
-</section>
-
-<section id="capabilities" data-toc="The hand-off" data-order="10" data-tier="act1" class="section">
-  <h2>One simple hand-off, every kind of test</h2>
-  <p class="lead">Every model is treated the same way: you hand it an input (a set of
-    images, a sentence, a sound, a video, a moment in a game, even a switched-off part
-    of the model) and it hands back a response (where the brain lights up, a choice, an
-    action, or a written answer). The kind of input decides what's being tested; the kind
-    of response tells you how it did. That single, shared hand-off is what lets one model
-    run on every compatible test below.</p>
-  <div class="cap-grid" id="cap-grid"></div>
-  <div class="status-panel">
-    <h3>Capability status</h3>
-    <p class="muted small" id="capability-status-note"></p>
-    <table class="nulls-table status-table" id="capability-status-table"></table>
-  </div>
-</section>
-
-<section id="frontier" data-toc="What it opens up" data-order="15" data-tier="act1" class="section alt">
-  <h2>What one shared interface opens up</h2>
-  <p class="lead">Because every subject is just something that exchanges information over channels,
-    the same setup reaches past today's models. These are on the horizon — expressible through the
-    interface, shown here as direction, not yet as scored results.</p>
-  <div class="cap-grid">
-    <div class="cap-card"><div class="tag">on the horizon</div>
-      <h3>A model, or a person</h3>
-      <p>The interface never assumes the subject is a model. Present the same input on a screen and
-        record from electrodes, and a person meets the same contract — so a test can, in principle,
-        run on either.</p></div>
-    <div class="cap-card"><div class="tag">on the horizon</div>
-      <h3>Reading and writing to the brain</h3>
-      <p>Recording is one direction; stimulation is the other. The same machinery that reads a region
-        can drive it — the basis for testing decoders and sensory implants.</p></div>
-    <div class="cap-card"><div class="tag">on the horizon</div>
-      <h3>More than one subject at once</h3>
-      <p>Several subjects can share one session, one's output becoming another's input — the opening
-        for studying interaction between two models, or between a model and a person.</p></div>
-    <div class="cap-card"><div class="tag">on the horizon</div>
-      <h3>Body signals, not just choices</h3>
-      <p>Behavior isn't only button presses. Pupil size and skin response are readouts on their own
-        channels, so physiological measures sit beside the neural and behavioral ones.</p></div>
-  </div>
-</section>
-
-<section id="response" data-toc="Brain response" data-order="20" data-tier="act1" class="section">
-  <h2>Show it something, see where the brain lights up</h2>
-  <p class="lead">Pick a kind of input below. The map shows roughly where in the brain
-    that kind of input drives activity: the part of the brain a model is then asked to predict.</p>
-  <div class="response-wrap">
-    <div class="input-toggles" id="input-toggles"></div>
-    <div class="response-panel">
-      <figure class="illus-fig">
-        <span class="illus-badge">illustrative</span>
-        <img id="cortex-img" src="assets/cortex_demo.png?v=3" alt="predicted cortical response (illustrative)" />
-        <figcaption id="cortex-cap">Illustrative: roughly where in the brain this kind of input is predicted to drive activity, drawn on a standard brain surface by our own visualization tools.</figcaption>
-      </figure>
-      <div class="response-text">
-        <h3 id="resp-type"></h3>
-        <p id="resp-desc"></p>
-        <div class="kv"><span>test</span><b id="resp-bench"></b></div>
-        <div class="kv"><span>example input</span><b id="resp-example"></b></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="moviebrain" data-toc="Movie → brain" data-order="30" data-tier="act1" class="section alt">
-  <h2 id="mb-title"></h2>
-  <p class="lead" id="mb-sub"></p>
-  <div class="mb-grid">
-    <div class="mb-left">
-      <figure class="mb-fig mb-video-fig">
-        <div class="mb-stim-card">
-          <span class="mb-stim-tag">what went in</span>
-          <p>The person watched a ~10-second clip from the TV show <b>Friends</b> (moving images,
-            sound, and dialogue). We can't show the footage itself, since it's licensed (part of the
-            Algonauts / Courtois NeuroMod dataset), so scrub or play to step through the recorded
-            brain snapshots instead.</p>
+      <!-- LEGACY -->
+      <div class="pane pane--legacy">
+        <div class="pane-head">
+          <span class="pane-tag"><span class="dot"></span>Today &middot; brainscore-vision + brainscore-language</span>
+          <div class="pane-title">Two interfaces, one per domain</div>
         </div>
-        <div class="mb-scrub-row">
-          <button id="mb-play" class="mb-play" type="button">▶ play</button>
-          <input type="range" id="mb-scrub" min="0" max="6" value="0" aria-label="scrub through the clip" />
-        </div>
-        <figcaption>Picture + sound + dialogue went in; both brains respond in step.</figcaption>
-      </figure>
-      <div class="mb-transcript" id="mb-transcript"></div>
-      <p class="muted small" style="margin:12px 0 2px">How well the two brains match, snapshot by snapshot — the agreement is statistical, not a visual overlay:</p>
-      <div id="mb-rcurve" class="plot" style="height:150px"></div>
-    </div>
-    <div class="mb-brain-col">
-      <figure class="mb-fig mb-brain-fig">
-        <figcaption class="mb-brainlabel mb-human-lbl">Human: the person's <b>actual</b> recorded brain (the real answer)</figcaption>
-        <img id="mb-human" alt="recorded brain response, three views" />
-      </figure>
-      <div class="mb-tabs" id="mb-tabs"></div>
-      <figure class="mb-fig mb-brain-fig">
-        <figcaption class="mb-brainlabel mb-model-lbl">Model: the AI's <b>prediction</b> (for a clip it never trained on)</figcaption>
-        <img id="mb-model" alt="predicted brain response, three views" />
-      </figure>
-      <div class="mb-rnow" id="mb-rnow"></div>
-    </div>
-  </div>
-  <p class="muted small mb-note-full" id="mb-note"></p>
-  <p class="reading" id="mb-reading"></p>
-  <div class="raj-caveats" id="mb-caption"></div>
-</section>
-
-<section id="leaderboard" data-toc="Public leaderboard" data-order="35" data-tier="act1" class="section">
-  <h2 id="lb-title"></h2>
-  <p class="lead" id="lb-sub"></p>
-  <div class="two-col">
-    <figure class="lm-sweep-fig">
-      <p class="small" id="lb-indist-title" style="margin:0 0 4px;font-weight:600;color:var(--ink)"></p>
-      <div id="lb-indist-plot" class="plot" style="height:300px"></div>
-      <figcaption class="muted small" id="lb-indist-note"></figcaption>
-    </figure>
-    <figure class="lm-sweep-fig">
-      <p class="small" id="lb-ood-title" style="margin:0 0 4px;font-weight:600;color:var(--ink)"></p>
-      <div id="lb-ood-plot" class="plot" style="height:300px"></div>
-      <figcaption class="muted small" id="lb-ood-note"></figcaption>
-    </figure>
-  </div>
-  <p class="reading" id="lb-reading"></p>
-  <div class="raj-caveats" id="lb-caption"></div>
-</section>
-
-<section id="rajalingham" data-toc="Object matching" data-order="40" data-tier="act1" class="section alt">
-  <h2 id="raj-title"></h2>
-  <p class="lead" id="raj-sub"></p>
-  <div id="raj-seq">
-    <h3 id="raj-seq-title" style="margin:8px 0 6px"></h3>
-    <p class="muted small" id="raj-seq-sub"></p>
-    <div class="seq-trace" id="raj-seq-trace"></div>
-    <div class="two-col">
-      <div id="raj-seq-plot" class="plot"></div>
-      <div class="reading-box"><p id="raj-seq-reading"></p></div>
-    </div>
-    <div class="raj-caveats" id="raj-seq-caveat"></div>
-  </div>
-  <div class="two-col">
-    <div id="raj-plot" class="plot"></div>
-    <table class="paths-table" id="raj-table"></table>
-  </div>
-  <div class="raj-findings" id="raj-findings"></div>
-  <p class="reading" id="raj-reading"></p>
-  <div class="raj-caveats" id="raj-caveats"></div>
-
-</section>
-
-<section id="game" data-toc="Playing a game" data-order="50" data-tier="act1" class="section">
-  <h2 id="game-title"></h2>
-  <p class="lead" id="game-sub"></p>
-  <figure class="game-fig">
-    <img src="assets/game_rollout.png?v=4" alt="VLM grid-game rollout" />
-    <figcaption>One full playthrough: the model sees each frame, picks a move (up/down/left/right), the game updates and shows the next frame, round and round until it wins or runs out of moves.</figcaption>
-  </figure>
-  <div class="play-panel">
-    <h3>Play the same board the model played</h3>
-    <div class="play-wrap">
-      <canvas id="game-canvas" width="384" height="384"></canvas>
-      <div class="play-side">
-        <div class="play-pad">
-          <button data-dir="up" aria-label="up">↑</button>
-          <div class="play-pad-row">
-            <button data-dir="left" aria-label="left">←</button>
-            <button data-dir="down" aria-label="down">↓</button>
-            <button data-dir="right" aria-label="right">→</button>
+        <div class="pane-body">
+          <div class="io-box">
+            <div class="io-head">Input &middot; one batch</div>
+            <div class="io-content">A <span class="chan">StimulusSet</span> &mdash; every image handed over at once.
+              <span class="sub">A language benchmark hands over text instead.</span></div>
           </div>
+          <span class="chev">&#9662;</span>
+          <div class="calls">
+            <span class="chip">look_at(images)</span>
+            <span class="chip">start_recording('IT')</span>
+            <span class="chip">start_task(&hellip;)</span>
+            <span class="chip">digest_text(text)</span>
+          </div>
+          <div class="mid-note">reached through several domain-specific methods</div>
+          <div class="node">
+            <span class="role">The model</span>
+            <span class="name">a <small>BrainModel</small> (vision) or <small>ArtificialSubject</small> (language)</span>
+          </div>
+          <span class="chev">&#9662;</span>
+          <div class="io-box">
+            <div class="io-head">Output &middot; one batch</div>
+            <div class="io-content">A <span class="chan">NeuroidAssembly</span> / <span class="chan">BehavioralAssembly</span> &mdash; returned all at once.</div>
+          </div>
+          <p class="pane-note">Batch in, batch out. Vision and language use <b>different methods and different model types</b> &mdash;
+            a model is registered once per domain, and a new kind of experiment has no method at all.</p>
         </div>
-        <div class="play-btns">
-          <button id="game-watch" class="play-new">▶ Watch the model play</button>
-          <button id="game-new" class="play-new">New board ↻</button>
+      </div>
+
+      <!-- UMI -->
+      <div class="pane pane--umi">
+        <div class="pane-head">
+          <span class="pane-tag"><span class="dot"></span>With UMI</span>
+          <div class="pane-title">One interface, every experiment</div>
         </div>
-        <p class="muted small" id="game-status"></p>
+        <div class="pane-body">
+          <div class="io-box">
+            <div class="io-head">Input &middot; a stream</div>
+            <div class="io-content"><span class="chan">Input events</span>, arriving over time &mdash;
+              <span class="chan">vision &middot; text &middot; audio &middot; lesion:&hellip;</span>
+              <span class="sub">each stamped with a time, t_ms</span></div>
+          </div>
+          <span class="chev">&#9662;</span>
+          <div class="calls"><span class="chip chip--solo">subject.interact(session)</span></div>
+          <div class="mid-note">one method, whatever the experiment</div>
+          <div class="node">
+            <span class="role">The subject</span>
+            <span class="name">a model &mdash; or, in principle, a human</span>
+          </div>
+          <span class="chev">&#9662;</span>
+          <div class="io-box">
+            <div class="io-head">Output &middot; a stream</div>
+            <div class="io-content"><span class="chan">Output events</span>, emitted over time &mdash;
+              <span class="chan">neural:IT &middot; behavior &middot; motor</span>
+              <span class="sub">each stamped with a time, t_ms</span></div>
+          </div>
+          <p class="pane-note">One method, a <b>two-way stream</b>. A new kind of experiment is a new channel,
+            not a new method &mdash; and the same contract a human could satisfy.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ---- STREAMING ---- -->
+  <section class="fade">
+    <h2>What &ldquo;streaming&rdquo; means</h2>
+    <p class="stream-intro">Those input and output boxes are not batches &mdash; they are <b>streams</b>.
+      A benchmark opens a <b>session</b> and events flow <b>both ways over time</b>, each stamped with when it
+      happened (<code>t_ms</code>). The subject pulls the next input and emits its responses on its own clock.
+      A timeless model just answers each input as it arrives; a model with internal dynamics can also act
+      <em>between</em> them. Toggle to see how today&rsquo;s Brain-Score moves the same data instead.</p>
+
+    <div class="modeswitch" role="group" aria-label="Delivery mode">
+      <button type="button" data-mode="stream" class="active">Streaming &middot; UMI</button>
+      <button type="button" data-mode="batch">Batch &middot; today</button>
+    </div>
+
+    <div class="smode is-stream" id="smode">
+      <div class="scope">
+        <div class="scope-side">
+          <span class="only-stream">Input events streaming in</span>
+          <span class="only-batch">The whole StimulusSet, handed over at once</span>
+          <span class="live only-stream"><span class="blip"></span>live session</span>
+          <span class="oneshot only-batch">one shot</span>
+        </div>
+        <div class="lanes in">
+          <div class="lane"><span class="lane-lab">vision</span><div class="track" data-n="10" data-seed="7" style="--spd:19s"></div></div>
+          <div class="lane"><span class="lane-lab">audio</span><div class="track" data-n="14" data-seed="23" style="--spd:15s"></div></div>
+          <div class="lane"><span class="lane-lab">text</span><div class="track" data-n="5" data-seed="41" style="--spd:26s"></div></div>
+        </div>
+
+        <div class="spine only-stream">
+          <span class="arm"><code>next_input()</code> pulls each event &#8595;</span>
+          <span class="pill">subject.interact(session)</span>
+          <span class="arm">&#8593; <code>emit()</code> sends each response</span>
+        </div>
+        <div class="spine batch-spine only-batch">
+          <span class="pill legacy-pill">look_at() &middot; digest_text()</span>
+          <span class="arm">one batch in &middot; one batch out &middot; no per-event timing</span>
+        </div>
+
+        <div class="lanes out">
+          <div class="lane"><span class="lane-lab">neural:IT</span><div class="track" data-n="12" data-seed="13" style="--spd:17s"></div></div>
+          <div class="lane"><span class="lane-lab">behavior</span><div class="track" data-n="4" data-seed="29" style="--spd:29s"></div></div>
+          <div class="lane"><span class="lane-lab">motor</span><div class="track" data-n="8" data-seed="53" style="--spd:21s"></div></div>
+        </div>
+
+        <div class="axis only-stream">
+          <span></span>
+          <div class="aline">
+            <span class="atk" style="left:0"></span><span class="albl" style="left:0">0</span>
+            <span class="atk" style="left:25%"></span><span class="albl" style="left:25%">40</span>
+            <span class="atk" style="left:50%"></span><span class="albl" style="left:50%">80</span>
+            <span class="atk" style="left:75%"></span><span class="albl" style="left:75%">120</span>
+          </div>
+          <div class="acap">time (ms) &rarr;</div>
+        </div>
+        <div class="axis-batch only-batch">
+          <span></span>
+          <div class="noaxis">no time axis &mdash; one call in, one call out</div>
+        </div>
+      </div>
+
+      <p class="stream-cap only-stream">Each mark is a <b>StreamEvent</b> &mdash; a channel, a payload, and a <code>t_ms</code>.
+        Inputs stream in (scrolling left); the subject&rsquo;s responses stream out (scrolling right).</p>
+      <p class="stream-cap only-batch">Same data, delivered as one block in and one block out. The pieces are all there,
+        but <b>when each one happened is not</b> &mdash; there is no time axis to place them on. UMI keeps that timing,
+        so a model with its own dynamics can act between inputs, and a continuous movie or a closed loop fits the same contract.</p>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section class="fade">
+    <h2>What stays identical underneath</h2>
+    <div class="band">
+      <div class="k">Same<br>science</div>
+      <p>Same weights, same preprocessing, same layer extraction, same caching, same metrics &mdash;
+        so a benchmark returns <b>the same score, bit-for-bit</b>. Existing models and benchmarks are
+        <b>never removed</b>: a legacy model runs through an adapter that turns <code>interact()</code>
+        back into <code>look_at()</code> / <code>digest_text()</code>. UMI changes the doorway,
+        not the room.</p>
+    </div>
+
+    <div class="concrete">
+      <p>Concretely: <b>CLIP</b>, registered <span class="m">once</span> as a subject, is scored by a
+        vision benchmark (it emits on <span class="m">neural:IT</span>), a language benchmark
+        (<span class="m">neural:language_network</span>), and a reading-behavior benchmark
+        (<span class="m">behavior</span>) &mdash; with no re-registration.</p>
+      <p class="after">Today, that is <b>three separate model submissions across two repositories</b>.</p>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section class="fade">
+    <h2>The vocabulary, decoded</h2>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>UMI term</th><th>In plain English</th><th>What it replaces today</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="term"><code>Subject</code></td>
+            <td class="plain">The thing being tested &mdash; a model, or in principle a human.</td>
+            <td class="old"><code>BrainModel</code> (vision) and <code>ArtificialSubject</code> (language) &mdash; two separate types.</td>
+          </tr>
+          <tr>
+            <td class="term"><code>interact(session)</code></td>
+            <td class="plain">The single call a benchmark makes to run the model.</td>
+            <td class="old"><code>look_at</code> + <code>start_recording</code> + <code>start_task</code> + <code>digest_text</code> &mdash; several different calls.</td>
+          </tr>
+          <tr>
+            <td class="term"><code>StreamEvent</code></td>
+            <td class="plain">One timestamped piece of data on a channel &mdash; an image, a sentence, a spike.</td>
+            <td class="old">A <code>StimulusSet</code> row going in, or an assembly coming out.</td>
+          </tr>
+          <tr>
+            <td class="term"><code>channel</code></td>
+            <td class="plain">The labeled wire a piece of data travels on.</td>
+            <td class="old">Implied by <em>which method</em> you happened to call.</td>
+          </tr>
+          <tr>
+            <td class="term"><code>Session</code></td>
+            <td class="plain">The two-way stream between benchmark and model, over time.</td>
+            <td class="old">The benchmark&rsquo;s own loop of method calls.</td>
+          </tr>
+          <tr>
+            <td class="term"><code>neural:IT</code></td>
+            <td class="plain">An output channel meaning &ldquo;record from region IT.&rdquo;</td>
+            <td class="old"><code>start_recording('IT')</code>.</td>
+          </tr>
+          <tr>
+            <td class="term"><code>behavior</code></td>
+            <td class="plain">An output channel carrying a choice or an answer.</td>
+            <td class="old">The readout set up by <code>start_task</code>.</td>
+          </tr>
+          <tr>
+            <td class="term"><code>lesion:&hellip;</code></td>
+            <td class="plain">An input channel meaning &ldquo;switch off these units.&rdquo;</td>
+            <td class="old"><span class="none">No equivalent &mdash; would need a new method.</span></td>
+          </tr>
+          <tr>
+            <td class="term"><code>motor</code></td>
+            <td class="plain">An output channel carrying an action in a world.</td>
+            <td class="old"><span class="none">No equivalent &mdash; would need a new method.</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section class="fade">
+    <h2>Why bother &mdash; three things it unlocks</h2>
+    <div class="unlocks">
+      <div class="u">
+        <span class="u-mark">one model &rarr; every domain</span>
+        <h3>No more per-domain silos</h3>
+        <p>A single registration is scored on vision, language, and behavior benchmarks alike, instead of one submission per domain across two codebases.</p>
+      </div>
+      <div class="u">
+        <span class="u-mark">new experiment = new channel</span>
+        <h3>Extend without touching the interface</h3>
+        <p>Lesioning, stimulation, and embodied action are added as channels in a registry &mdash; not as new methods threaded through every benchmark.</p>
+      </div>
+      <div class="u">
+        <span class="u-mark">model &equiv; human</span>
+        <h3>The same test on a person</h3>
+        <p>Because the contract never assumes the subject is a model, the identical benchmark can, in principle, be run on a human &mdash; the strongest check of &ldquo;brain-like.&rdquo;</p>
       </div>
     </div>
-  </div>
-  <div class="two-col">
-    <div id="game-plot" class="plot"></div>
-    <div class="reading-box">
-      <h3>Playing a game, through the same hand-off</h3>
-      <p id="game-reading"></p>
-      <div class="flow">
-        <span>show the board</span><span class="arrow">→</span>
-        <span>model picks a move</span><span class="arrow">→</span>
-        <span>game updates</span><span class="arrow">→</span>
-        <span>repeat</span>
-      </div>
+  </section>
+
+  <hr class="rule">
+
+  <section class="fade" style="text-align:center">
+    <h2 style="margin-bottom:16px">Go deeper</h2>
+    <div class="cta-row" style="justify-content:center">
+      <a class="btn btn-primary" href="overview.html">Read the overview &rarr;</a>
+      <a class="btn btn-ghost" href="architecture.html">See the architecture &rarr;</a>
     </div>
-  </div>
-</section>
+  </section>
 
-<section id="selection" data-toc="Word-form units" data-order="110" data-tier="act2" class="section">
-  <h2>Finding a model's word-selective units</h2>
-  <p class="lead">To study reading, we first have to find the model's word-selective units.
-    We do it the way brain scientists do: show the model words and non-words, and
-    keep the neurons that fire much harder for real words.</p>
-  <figure class="localizer-fig">
-    <img src="assets/localizer_stimuli.png?v=3" alt="word vs non-word images" />
-    <figcaption>How we find them: we score every neuron by how much more it responds
-      to <b>real words</b> than to <b>non-words</b> (scrambled letters and simple
-      drawings), and keep the strongest responders as the model's word-selective units.
-      This is the same word-vs-non-word comparison used in the dyslexia experiment below.</figcaption>
-  </figure>
-  <div class="two-col">
-    <div id="selection-plot" class="plot"></div>
-    <div class="reading-box">
-      <h3>Gathering them from wherever they live</h3>
-      <p id="selection-reading"></p>
-      <p class="muted small">The usual approach reads from a single layer of the model;
-      here, instead, we collect the word-selective units from across several layers and treat
-      them as one group, because that's where they naturally turn out to be.</p>
-    </div>
-  </div>
-</section>
+  <footer>
+    One line to remember: today a benchmark reaches into a model through many domain-specific methods and gets
+    one batch back; with UMI it opens a <code>session</code>, calls <code>interact</code> once, and events stream
+    both ways over time. Same weights, same metrics, same scores &mdash; a thinner doorway into the same room.
+  </footer>
 
-<section id="tools" data-toc="The tools" data-order="120" data-tier="act2" class="section">
-  <h2 id="tools-title"></h2>
-  <p class="lead" id="tools-sub"></p>
+</div>
 
-  <div class="tool-feature">
-    <div class="tool-head">
-      <span class="tool-eyebrow" id="tools-ar-tag"></span>
-      <h3 id="tools-ar-name"></h3>
-    </div>
-    <div class="schematic">
-      <svg viewBox="0 0 920 260" role="img" aria-label="Auto-setup flow: a model goes in, the setup is worked out, the model comes out ready to test">
-        <defs>
-          <marker id="ah" markerWidth="10" markerHeight="8" refX="7" refY="3.2" orient="auto">
-            <path d="M0,0 L7,3.2 L0,6.4 Z" class="sc-arrowhead"/>
-          </marker>
-        </defs>
-        <rect class="sc-box" x="20" y="44" width="208" height="116" rx="12"/>
-        <text class="sc-title" x="124" y="82" text-anchor="middle">Your model</text>
-        <text class="sc-sub" x="124" y="106" text-anchor="middle">any model:</text>
-        <text class="sc-sub" x="124" y="124" text-anchor="middle">sees, reads, hears,</text>
-        <text class="sc-sub" x="124" y="142" text-anchor="middle">watches, or a mix</text>
-        <line class="sc-line" x1="228" y1="102" x2="282" y2="102" marker-end="url(#ah)"/>
-        <rect class="sc-box accent" x="288" y="26" width="290" height="152" rx="12"/>
-        <text class="sc-title" x="433" y="56" text-anchor="middle">Auto-setup</text>
-        <circle class="sc-dot" cx="312" cy="85" r="3"/>
-        <text class="sc-sub" x="324" y="89">recognises what kind it is</text>
-        <circle class="sc-dot" cx="312" cy="113" r="3"/>
-        <text class="sc-sub" x="324" y="117">finds the layers worth reading</text>
-        <circle class="sc-dot" cx="312" cy="141" r="3"/>
-        <text class="sc-sub" x="324" y="145">picks how to read them</text>
-        <line class="sc-line" x1="578" y1="102" x2="632" y2="102" marker-end="url(#ah)"/>
-        <rect class="sc-box good" x="638" y="44" width="262" height="116" rx="12"/>
-        <text class="sc-title" x="769" y="82" text-anchor="middle">Ready to test</text>
-        <text class="sc-sub" x="769" y="106" text-anchor="middle">the same one command</text>
-        <text class="sc-sub" x="769" y="124" text-anchor="middle">runs every eligible benchmark</text>
-        <text class="sc-sub" x="769" y="142" text-anchor="middle">from the same model wiring</text>
-        <path class="sc-line dashed" d="M433,178 L433,206" marker-end="url(#ah)"/>
-        <rect class="sc-box ghost" x="245" y="210" width="376" height="40" rx="10"/>
-        <text class="sc-sub" x="433" y="234" text-anchor="middle">a starting point; Tool 2 (below) fine-tunes it</text>
-      </svg>
-    </div>
-    <p class="tool-caption" id="tools-ar-cap"></p>
-  </div>
+<script>
+  (function(){
+    // populate each streaming track with event marks (two identical halves = seamless marquee)
+    // plus a solid batch bar shown in "Batch · today" mode.
+    document.querySelectorAll('.track').forEach(function(tr){
+      var n = parseInt(tr.dataset.n, 10) || 9;
+      var seed = parseInt(tr.dataset.seed, 10) || 1;
+      function rnd(){ seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+      var group = document.createElement('span');
+      group.className = 'dots';
+      for (var i = 0; i < n; i++){
+        var ev = document.createElement('i');
+        ev.className = 'ev';
+        ev.style.width = (10 + Math.round(rnd() * 22)) + 'px';
+        ev.style.marginLeft = (16 + Math.round(rnd() * 44)) + 'px';
+        group.appendChild(ev);
+      }
+      var flow = document.createElement('div');
+      flow.className = 'flow-dots';
+      flow.appendChild(group);
+      flow.appendChild(group.cloneNode(true));
+      tr.appendChild(flow);
+      var bar = document.createElement('div');
+      bar.className = 'batch-bar';
+      tr.appendChild(bar);
+    });
 
-  <div class="tool-feature">
-    <div class="tool-head">
-      <span class="tool-eyebrow" id="tools-lm-tag"></span>
-      <h3 id="tools-lm-name"></h3>
-    </div>
-    <div class="schematic">
-      <svg viewBox="0 0 940 280" role="img" aria-label="Layer-mapping flow: score every layer against the brain area, keep the best, confirm on a separate set">
-        <defs>
-          <marker id="ah2" markerWidth="10" markerHeight="8" refX="7" refY="3.2" orient="auto">
-            <path d="M0,0 L7,3.2 L0,6.4 Z" class="sc-arrowhead"/>
-          </marker>
-        </defs>
-        <rect class="sc-box" x="14" y="40" width="150" height="176" rx="12"/>
-        <text class="sc-title" x="89" y="64" text-anchor="middle">Inner layers</text>
-        <rect class="sc-chip" x="34" y="78"  width="110" height="20" rx="5"/>
-        <text class="sc-chiptext" x="89" y="92" text-anchor="middle">layer 1</text>
-        <rect class="sc-chip" x="34" y="104" width="110" height="20" rx="5"/>
-        <text class="sc-chiptext" x="89" y="118" text-anchor="middle">layer 2</text>
-        <rect class="sc-chip hot" x="34" y="130" width="110" height="20" rx="5"/>
-        <text class="sc-chiptext" x="89" y="144" text-anchor="middle">layer 3</text>
-        <rect class="sc-chip" x="34" y="156" width="110" height="20" rx="5"/>
-        <text class="sc-chiptext" x="89" y="170" text-anchor="middle">layer 4</text>
-        <rect class="sc-chip" x="34" y="182" width="110" height="20" rx="5"/>
-        <text class="sc-chiptext" x="89" y="197" text-anchor="middle">…</text>
-        <line class="sc-line" x1="164" y1="128" x2="200" y2="128" marker-end="url(#ah2)"/>
-        <rect class="sc-box accent" x="206" y="64" width="224" height="128" rx="12"/>
-        <text class="sc-title" x="318" y="106" text-anchor="middle">Score every layer</text>
-        <text class="sc-sub" x="318" y="128" text-anchor="middle">against the brain area</text>
-        <text class="sc-accent-txt" x="318" y="158" text-anchor="middle">on a STUDY set of clips</text>
-        <line class="sc-line" x1="430" y1="128" x2="466" y2="128" marker-end="url(#ah2)"/>
-        <rect class="sc-box" x="472" y="64" width="160" height="128" rx="12"/>
-        <text class="sc-title" x="552" y="122" text-anchor="middle">Keep the best-</text>
-        <text class="sc-title" x="552" y="142" text-anchor="middle">scoring layer</text>
-        <line class="sc-line" x1="632" y1="128" x2="668" y2="128" marker-end="url(#ah2)"/>
-        <rect class="sc-box good" x="674" y="64" width="252" height="128" rx="12"/>
-        <text class="sc-title" x="800" y="102" text-anchor="middle">Double-check it</text>
-        <text class="sc-sub" x="800" y="124" text-anchor="middle">on a SEPARATE set of clips</text>
-        <text class="sc-good-txt" x="800" y="152" text-anchor="middle">never graded on what picked it</text>
-        <path class="sc-line" d="M800,192 L800,222" marker-end="url(#ah2)"/>
-        <rect class="sc-box ghost" x="566" y="226" width="360" height="40" rx="10"/>
-        <text class="sc-sub" x="746" y="250" text-anchor="middle">result: this brain area ↔ its best-matching layer</text>
-      </svg>
-    </div>
-    <p class="tool-caption" id="tools-lm-cap"></p>
-  </div>
-</section>
+    // streaming <-> batch toggle
+    var smode = document.getElementById('smode');
+    var btns = document.querySelectorAll('.modeswitch button');
+    btns.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var mode = btn.dataset.mode;
+        smode.className = 'smode is-' + mode;
+        btns.forEach(function(b){ b.classList.toggle('active', b.dataset.mode === mode); });
+      });
+    });
+  })();
+</script>
 
-<section id="layermapping" data-toc="Layer mapping" data-order="130" data-tier="act2" class="section alt">
-  <p class="tool-eyebrow-row"><span class="tool-eyebrow">Tool 2 · Layer mapping, in action</span></p>
-  <h2 id="lm-title"></h2>
-  <p class="lead" id="lm-sub"></p>
-  <div class="two-col">
-    <figure class="lm-sweep-fig">
-      <div id="lm-sweep-plot" class="plot" style="height:320px"></div>
-      <figcaption class="muted small">Reading the best single layer, swept across all 24. There's a clear sweet spot in the middle.</figcaption>
-    </figure>
-    <figure class="lesion-brain">
-      <img id="lm-heatmap-img" alt="V-JEPA2 per-layer per-unit predictivity heatmap" />
-      <figcaption id="lm-heatmap-cap"></figcaption>
-    </figure>
-  </div>
-  <div class="lm-approaches">
-    <h3 id="lm-appr-title"></h3>
-    <p class="muted small lm-narrow" id="lm-metric-note"></p>
-    <div id="lm-budget-plot" class="plot" style="height:340px"></div>
-    <p class="small" id="lm-table-title" style="margin:24px 0 6px;font-weight:600;color:var(--ink)"></p>
-    <table class="paths-table" id="lm-appr-table"></table>
-    <p class="muted small lm-narrow" id="lm-table-caveat"></p>
-    <p id="lm-reading"></p>
-    <div class="lm-deepdive" id="lm-deepdive">
-      <h3 id="dd-title"></h3>
-      <p class="muted small lm-narrow" id="dd-lead"></p>
-      <div class="dd-cards" id="dd-cards"></div>
-      <p class="small" id="dd-pc-title" style="margin:20px 0 4px;font-weight:600;color:var(--ink)"></p>
-      <div id="dd-pc-plot" class="plot" style="height:260px"></div>
-      <p class="muted small lm-narrow" id="dd-pc-cap"></p>
-    </div>
-  </div>
-</section>
-
-<section id="generalize" data-toc="Does it generalize?" data-order="108" data-tier="act2" class="section">
-  <h2 id="gen-title"></h2>
-  <p class="lead" id="gen-sub"></p>
-  <div class="two-col">
-    <figure class="lm-sweep-fig">
-      <p class="small" id="gen-dim-title" style="margin:0 0 4px;font-weight:600;color:var(--ink)"></p>
-      <div id="gen-dim-plot" class="plot" style="height:300px"></div>
-      <figcaption class="muted small" id="gen-dim-note"></figcaption>
-    </figure>
-    <figure class="lm-sweep-fig">
-      <p class="small" id="gen-hier-title" style="margin:0 0 4px;font-weight:600;color:var(--ink)"></p>
-      <div id="gen-hier-plot" class="plot" style="height:300px"></div>
-      <figcaption class="muted small" id="gen-hier-note"></figcaption>
-    </figure>
-  </div>
-  <p class="reading" id="gen-reading"></p>
-</section>
-
-<section id="witness" data-toc="Watch it run" data-order="150" data-tier="act2" class="section alt">
-  <p class="tool-eyebrow-row"><span class="tool-eyebrow">Tool 3 · Watch it run</span></p>
-  <h2 id="witness-title"></h2>
-  <p class="lead" id="witness-sub"></p>
-  <div class="witness-modes" id="witness-modes"></div>
-  <div class="witness-grid" id="witness-grid"></div>
-  <p class="reading" id="witness-reading"></p>
-</section>
-
-<section id="percept" data-toc="What it saw" data-order="160" data-tier="act2" class="section">
-  <p class="tool-eyebrow-row"><span class="tool-eyebrow">Tool 4 · See what it saw</span></p>
-  <h2 id="percept-title"></h2>
-  <p class="lead" id="percept-sub"></p>
-  <div class="percept-tabs" id="percept-tabs"></div>
-  <div class="percept-grid" id="percept-grid"></div>
-  <p class="reading" id="percept-reading"></p>
-  <div class="raj-caveats" id="percept-caveat"></div>
-</section>
-
-<section id="fusion" data-toc="Fusing the senses" data-order="140" data-tier="act2" class="section">
-  <h2 id="fusion-title"></h2>
-  <p class="lead" id="fusion-sub"></p>
-  <div class="two-col">
-    <div class="two-col-stack">
-      <div id="fusion-plot" class="plot"></div>
-      <div id="fusion-curve-plot" class="plot" style="height:280px"></div>
-      <p class="muted small" id="fusion-curve-cap"></p>
-    </div>
-    <div class="reading-box">
-      <h3 id="fusion-appr-title"></h3>
-      <table class="paths-table" id="fusion-table"></table>
-      <p id="fusion-reading"></p>
-      <h3 class="caveat-h">Caveats</h3>
-      <div class="raj-caveat" id="fusion-caveat"></div>
-    </div>
-  </div>
-</section>
-
-<section id="ablation" data-toc="Dyslexia" data-order="60" data-tier="act1" class="section alt">
-  <h2>Switching off a model's word-selective units: giving it "dyslexia"</h2>
-  <p class="lead">We switch off the model's word-selective units, re-test its reading, then
-    switch them back on (it restores perfectly). The result reproduces a 2026 study:
-    in a large enough model, switching off the word-selective units pushes its reading below
-    the dyslexia line, while switching off the same number of random neurons barely
-    matters. And the effect only appears once the model is big enough.</p>
-  <div class="two-col">
-    <div class="two-col-stack">
-      <div id="ablation-plot" class="plot"></div>
-      <figure class="lesion-brain">
-        <img id="lesion-brain-img" src="assets/vwfa_glass.png?v=3" alt="the brain's reading area, highlighted" />
-        <figcaption id="lesion-brain-cap"></figcaption>
-      </figure>
-    </div>
-    <div class="reading-box">
-      <h3>Making it dyslexic, and only when it's big enough</h3>
-      <p class="muted small" id="ablation-protocol"></p>
-      <p id="ablation-reading"></p>
-    </div>
-  </div>
-</section>
-
-<section id="scaling" data-toc="Bigger models" data-order="70" data-tier="act1" class="section alt">
-  <h2>Better models, better scores</h2>
-  <p class="lead">A test worth running should reward better models and sit near its
-    "knows-nothing" floor for an untrained one. That's the basic sanity check: pick a
-    capability and see whether the scores climb the way they should.</p>
-  <div class="scaling-wrap">
-    <div class="scaling-tabs" id="scaling-tabs"></div>
-    <div id="scaling-plot" class="plot"></div>
-    <p class="reading" id="scaling-reading"></p>
-  </div>
-</section>
-
-<section id="gemma-scorecard" data-toc="Gemma scorecard" data-order="170" data-tier="act2" class="section">
-  <h2 id="gsc-title"></h2>
-  <p class="lead" id="gsc-sub"></p>
-  <table class="nulls-table" id="gsc-table"></table>
-  <p class="reading" id="gsc-reading"></p>
-</section>
-
-<section id="layercontrib" data-toc="Where signal lives" data-order="190" data-tier="act2" class="section alt">
-  <h2 id="lc-title"></h2>
-  <p class="lead" id="lc-sub"></p>
-  <div class="two-col">
-    <div id="lc-plot" class="plot" style="height:320px"></div>
-    <div class="reading-box">
-      <h3>Where the brain-like signal lives in each model</h3>
-      <p id="lc-reading"></p>
-    </div>
-  </div>
-</section>
-
-<section id="mechanics" data-toc="Inside one test" data-order="200" data-tier="act2" class="section">
-  <h2 id="mech-title"></h2>
-  <p class="lead" id="mech-sub"></p>
-  <div class="mech-wrap">
-    <div class="mech-task">
-      <h3>The task</h3>
-      <p id="mech-task"></p>
-      <div class="mech-paths" id="mech-paths"></div>
-    </div>
-    <div class="mech-side">
-      <div id="mech-floors-plot" class="plot" style="height:280px"></div>
-      <p class="reading" id="mech-answer"></p>
-    </div>
-  </div>
-  <h3 id="allpaths-title" style="margin:32px 0 4px"></h3>
-  <p class="muted small" id="allpaths-sub"></p>
-  <div class="two-col">
-    <div id="allpaths-plot" class="plot"></div>
-    <table class="paths-table" id="allpaths-table"></table>
-  </div>
-  <p class="reading" id="allpaths-reading"></p>
-</section>
-
-<section id="models" data-toc="The models" data-order="210" data-tier="act2" class="section">
-  <h2 id="models-title"></h2>
-  <p class="lead" id="models-sub"></p>
-  <div class="model-grid" id="model-grid"></div>
-</section>
-
-<section id="nulls" data-toc="Null baselines" data-order="180" data-tier="act2" class="section alt">
-  <h2>A null baseline, for every test</h2>
-  <p class="lead">No result counts here until it clearly beats a deliberately broken
-    version of the same test: the same machinery, with the real signal stripped out.
-    If a score doesn't clear that floor, it's coming from the setup, not the model.</p>
-  <div class="two-col">
-    <div id="shift-plot" class="plot"></div>
-    <div class="reading-box">
-      <h3 id="shift-title"></h3>
-      <p class="muted small" id="shift-sub"></p>
-      <p id="shift-reading"></p>
-    </div>
-  </div>
-  <table class="nulls-table" id="nulls-table" style="margin-top:24px"></table>
-</section>
-
-<section id="limitations" data-toc="What to keep in mind" data-order="300" data-tier="always" class="section">
-  <h2 id="lim-title">What to keep in mind</h2>
-  <p class="lead">Honesty is the point. The same care that earns a result also has to
-    say where it's shaky, not fully controlled, or only proves the machinery runs.
-    Here's that list, in plain terms.</p>
-  <ul class="lim-list" id="lim-list"></ul>
-</section>
-
-<footer class="footer">
-  <div>
-    <b>Try it.</b> Everything here runs from one short, repeatable recipe. There's a
-    ready-to-run example for each capability shown on this page, and the same toolkit
-    draws every figure above.
-  </div>
-  <div class="cta-row">
-    <a class="cta-btn" href="https://www.brain-score.org" target="_blank" rel="noopener">Live leaderboard &amp; submit a model →</a>
-    <a class="cta-btn" href="https://github.com/brain-score" target="_blank" rel="noopener">Code on GitHub →</a>
-    <a class="cta-btn" href="architecture.html">How it works →</a>
-  </div>
-  <div class="muted small" id="provenance"></div>
-</footer>
-
-<script src="data.js?v=28"></script>
-<script src="app.js?v=22"></script>
-<script src="model_moves.js?v=2"></script>
-<script src="game.js?v=2"></script>
-<script src="audience.js?v=5"></script>
 </body>
 </html>
