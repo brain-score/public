@@ -357,9 +357,9 @@
           <span class="oneshot only-batch">one shot</span>
         </div>
         <div class="lanes in">
-          <div class="lane"><span class="lane-lab">vision</span><div class="track" data-n="10" data-seed="7" style="--spd:19s"></div></div>
-          <div class="lane"><span class="lane-lab">audio</span><div class="track" data-n="14" data-seed="23" style="--spd:15s"></div></div>
-          <div class="lane"><span class="lane-lab">text</span><div class="track" data-n="5" data-seed="41" style="--spd:26s"></div></div>
+          <div class="lane"><span class="lane-lab">vision</span><div class="track" data-n="10" data-seed="7" data-gap="61"></div></div>
+          <div class="lane"><span class="lane-lab">audio</span><div class="track" data-n="14" data-seed="23" data-gap="38"></div></div>
+          <div class="lane"><span class="lane-lab">text</span><div class="track" data-n="5" data-seed="41" data-gap="143"></div></div>
         </div>
 
         <div class="spine only-stream">
@@ -373,9 +373,9 @@
         </div>
 
         <div class="lanes out">
-          <div class="lane"><span class="lane-lab">neural:IT</span><div class="track" data-n="12" data-seed="13" style="--spd:17s"></div></div>
-          <div class="lane"><span class="lane-lab">behavior</span><div class="track" data-n="4" data-seed="29" style="--spd:29s"></div></div>
-          <div class="lane"><span class="lane-lab">motor</span><div class="track" data-n="8" data-seed="53" style="--spd:21s"></div></div>
+          <div class="lane"><span class="lane-lab">neural:IT</span><div class="track" data-n="12" data-seed="13" data-gap="47"></div></div>
+          <div class="lane"><span class="lane-lab">behavior</span><div class="track" data-n="4" data-seed="29" data-gap="184"></div></div>
+          <div class="lane"><span class="lane-lab">motor</span><div class="track" data-n="8" data-seed="53" data-gap="82"></div></div>
         </div>
 
         <div class="axis only-stream">
@@ -411,8 +411,8 @@
       <p>Same weights, same preprocessing, same layer extraction, same caching, same metrics &mdash;
         so a benchmark returns <b>the same score, bit-for-bit</b>. Existing models and benchmarks are
         <b>never removed</b>: a legacy model runs through an adapter that turns <code>interact()</code>
-        back into <code>look_at()</code> / <code>digest_text()</code>. UMI changes the doorway,
-        not the room.</p>
+        back into <code>look_at()</code> / <code>digest_text()</code>. Only how a model is called
+        changes; what runs underneath does not.</p>
     </div>
 
     <div class="concrete">
@@ -420,7 +420,8 @@
         vision benchmark (it emits on <span class="m">neural:IT</span>), a language benchmark
         (<span class="m">neural:language_network</span>), and a reading-behavior benchmark
         (<span class="m">behavior</span>) &mdash; with no re-registration.</p>
-      <p class="after">Today, that is <b>three separate model submissions across two repositories</b>.</p>
+      <p class="after">Today, that is <b>two separate model submissions across two repositories</b> &mdash;
+        one in vision, one in language (which covers both the language-neural and reading-behavior benchmarks).</p>
     </div>
   </section>
 
@@ -518,9 +519,9 @@
   </section>
 
   <footer>
-    One line to remember: today a benchmark reaches into a model through many domain-specific methods and gets
+    Today a benchmark reaches into a model through many domain-specific methods and gets
     one batch back; with UMI it opens a <code>session</code>, calls <code>interact</code> once, and events stream
-    both ways over time. Same weights, same metrics, same scores &mdash; a thinner doorway into the same room.
+    both ways over time. Same weights, same metrics, same scores; the only thing that changes is the interface itself.
   </footer>
 
 </div>
@@ -529,24 +530,34 @@
   (function(){
     // populate each streaming track with event marks (two identical halves = seamless marquee)
     // plus a solid batch bar shown in "Batch · today" mode.
+    var VELOCITY = 42;   // px per second — SHARED by every lane, so all events scroll at one speed
     document.querySelectorAll('.track').forEach(function(tr){
       var n = parseInt(tr.dataset.n, 10) || 9;
+      var gap = parseFloat(tr.dataset.gap) || 60;   // per-lane spacing = this channel's event frequency
       var seed = parseInt(tr.dataset.seed, 10) || 1;
       function rnd(){ seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
       var group = document.createElement('span');
       group.className = 'dots';
+      var groupW = 0;                               // width of one repeat, summed as we build it
       for (var i = 0; i < n; i++){
+        var w = 10 + Math.round(rnd() * 22);        // event-mark width (organic, 10-32px)
+        var ml = Math.round(gap * (0.7 + rnd() * 0.6));  // spacing jittered +/-30% around the lane's gap
         var ev = document.createElement('i');
         ev.className = 'ev';
-        ev.style.width = (10 + Math.round(rnd() * 22)) + 'px';
-        ev.style.marginLeft = (16 + Math.round(rnd() * 44)) + 'px';
+        ev.style.width = w + 'px';
+        ev.style.marginLeft = ml + 'px';
         group.appendChild(ev);
+        groupW += ml + w;
       }
       var flow = document.createElement('div');
       flow.className = 'flow-dots';
       flow.appendChild(group);
       flow.appendChild(group.cloneNode(true));
       tr.appendChild(flow);
+      // One repeat drifts by exactly groupW (translateX(-50%) of the two repeats), so
+      // duration = width / velocity makes EVERY lane move at the same px/s. A dense lane
+      // (small gap) just packs more events into that same travel: higher frequency, same speed.
+      tr.style.setProperty('--spd', (groupW / VELOCITY).toFixed(2) + 's');
       var bar = document.createElement('div');
       bar.className = 'batch-bar';
       tr.appendChild(bar);
