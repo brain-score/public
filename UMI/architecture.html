@@ -139,7 +139,7 @@ class Subject(ABC):               # the minimal interface every subject satisfie
       <code>lesion:</code> / <code>stimulation:</code> it is a unit selector (a layer path, optional
       indices) interpreted by the harness. Recording and perturbation share one address grammar.</p>
 
-    <h3>3 · The channel registry <span class="muted">— the contract's teeth</span></h3>
+    <h3>3 · The channel registry <span class="muted">— where payload shapes are pinned down</span></h3>
     <p>Because a payload is opaque at the Python type level, the registry is what keeps the substrate
       disciplined. It is a documented, runtime-queryable table; each entry defines a channel's
       direction, payload contract (dtype / shape / units), recognized <code>meta</code> keys, address

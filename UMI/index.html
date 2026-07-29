@@ -66,7 +66,7 @@
     display:inline-flex;align-items:center;gap:8px;}
   .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
   .pane--legacy .dot{background:var(--legacy);} .pane--umi .dot{background:var(--umi);}
-  .pane--legacy .pane-tag{color:var(--legacy);} .pane--umi .pane-tag{color:var(--umi);}
+  .pane--legacy{opacity:.62;} .pane--legacy .pane-tag{color:var(--legacy);} .pane--umi .pane-tag{color:var(--umi);}
   .pane-title{font-size:18px;font-weight:680;letter-spacing:-.01em;margin:9px 0 0;}
   .pane-body{padding:22px 22px 20px;flex:1;display:flex;flex-direction:column;gap:9px;}
 
@@ -247,7 +247,7 @@
 
   <header class="fade">
     <p class="eyebrow">Brain-Score &middot; Unified Model Interface</p>
-    <h1>What actually changes &mdash; and what doesn&rsquo;t</h1>
+    <h1>UMI generalizes Brain-Score, backwards-compatible</h1>
     <p class="lede">The Unified Model Interface (UMI) changes <strong>how a benchmark talks to a model</strong>.
       It does not change the models, the data, the metrics, or the scores. Here is the difference,
       without the vocabulary.</p>
@@ -266,7 +266,7 @@
       <!-- LEGACY -->
       <div class="pane pane--legacy">
         <div class="pane-head">
-          <span class="pane-tag"><span class="dot"></span>Today &middot; brainscore-vision + brainscore-language</span>
+          <span class="pane-tag"><span class="dot"></span>Previously (Brain-Score 2.0) &middot; brainscore-vision + brainscore-language</span>
           <div class="pane-title">Two interfaces, one per domain</div>
         </div>
         <div class="pane-body">
@@ -300,7 +300,7 @@
       <!-- UMI -->
       <div class="pane pane--umi">
         <div class="pane-head">
-          <span class="pane-tag"><span class="dot"></span>With UMI</span>
+          <span class="pane-tag"><span class="dot"></span>Now (Brain-Score 3.0)</span>
           <div class="pane-title">One interface, every experiment</div>
         </div>
         <div class="pane-body">
@@ -497,8 +497,8 @@
       </div>
       <div class="u">
         <span class="u-mark">new experiment = new channel</span>
-        <h3>Extend without touching the interface</h3>
-        <p>Lesioning, stimulation, and embodied action are added as channels in a registry &mdash; not as new methods threaded through every benchmark.</p>
+        <h3>Scalability</h3>
+        <p>New domains and experiment types &mdash; such as motor output or neural interventions &mdash; are added as a channel in the registry, so Brain-Score scales to new science without touching the interface.</p>
       </div>
       <div class="u">
         <span class="u-mark">model &equiv; human</span>
