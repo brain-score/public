@@ -150,8 +150,8 @@ class Subject(ABC):               # the minimal interface every subject satisfie
     <p>The substrate is general; the everyday surface is typed and ergonomic. Each helper builds a
       session, calls <code>interact</code>, and collects the output into the assembly the metrics
       already consume. Benchmark authors almost never touch a raw <code>StreamEvent</code>.</p>
-    <pre class="code"><code>score_stimuli(subject, stimulus_set, record='IT')  -&gt; NeuroidAssembly
-score_behavior(subject, task_context)              -&gt; BehavioralAssembly
+    <pre class="code"><code>neural_response(subject, stimulus_set, record='IT')  -&gt; NeuroidAssembly
+behavioral_response(subject, task_context)              -&gt; BehavioralAssembly
 apply_state_change(subject, state_change)          -&gt; handle          # lesion / stimulation
 run_environment(subject, environment)              -&gt; trajectory       # closed-loop motor</code></pre>
 
@@ -341,7 +341,7 @@ score     = brainscore.score('your-model', 'your-benchmark')</code></pre>
       <pre class="code arch-tree"><code>core/brainscore_core/                 # the interface spine — no heavy ML deps
 ├── model_interface.py                # Subject ABC · BrainScoreModel · interact() · event materializers
 ├── streaming.py                      # StreamEvent · Session · channel grammar
-├── streaming_helpers.py              # score_stimuli / score_behavior / apply_state_change / run_environment
+├── streaming_helpers.py              # neural_response / behavioral_response / apply_state_change / run_environment
 ├── compatibility.py                  # pre-flight channel check (fail fast)
 ├── memory.py                         # cross-platform CUDA/MPS/CPU memory probe
 ├── temporal.py                       # temporal_bin · hrf_convolve · contiguous_block_cv · window_plan

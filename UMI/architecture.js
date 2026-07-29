@@ -381,27 +381,27 @@
     if (task === 'generation') {
       if (!result.ok) return `subject = load_model(${id})\n` +
         `task = TaskContext(task_type='probabilities', instruction='…', label_set=[...])\n` +
-        `score_behavior(subject, task)   # -> ${result.etype}`;
+        `behavioral_response(subject, task)   # -> ${result.etype}`;
       return `subject = load_model(${id})   # generation_fn wired\n` +
         `task = TaskContext(task_type='probabilities',\n` +
         `                   instruction='Which category?', label_set=[...])\n` +
-        `assembly = score_behavior(subject, task)   # -> behavior channel: BehavioralAssembly (a label per stimulus)`;
+        `assembly = behavioral_response(subject, task)   # -> behavior channel: BehavioralAssembly (a label per stimulus)`;
     }
     if (task === 'readout') {
       if (!result.ok) return `subject = load_model(${id})\n` +
         `task = TaskContext(task_type='probabilities', fitting_stimuli=train)\n` +
-        `score_behavior(subject, task)   # -> ${result.etype}`;
+        `behavioral_response(subject, task)   # -> ${result.etype}`;
       return `subject = load_model(${id})\n` +
         `task = TaskContext(task_type='probabilities', fitting_stimuli=train)\n` +
-        `assembly = score_behavior(subject, task)   # -> behavior channel: BehavioralAssembly (logistic head fit on a layer)`;
+        `assembly = behavioral_response(subject, task)   # -> behavior channel: BehavioralAssembly (logistic head fit on a layer)`;
     }
     // neural encoding
     if (!result.ok) return `subject = load_model(${id})\n` +
-      `score_stimuli(subject, ${stimVar}, record='${modelRegion}')   # -> ${result.etype}`;
+      `neural_response(subject, ${stimVar}, record='${modelRegion}')   # -> ${result.etype}`;
     if (state.multi && supported.length > 1) {
       const regs = [...new Set(supported.map(m => REGION_FOR[m] || 'IT'))];
       return `subject = load_model(${id})   # region_modality_map routes each region to its tower\n` +
-        `assembly = score_stimuli(subject, ${stimVar},\n` +
+        `assembly = neural_response(subject, ${stimVar},\n` +
         `                         record=[${regs.map(r => `'${r}'`).join(', ')}],\n` +
         `                         channels=[${supported.map(m => `'${m}'`).join(', ')}])   # multiple input channels -> NeuroidAssembly on neural:{region} (${supported.join(' + ')} towers)`;
     }
@@ -412,7 +412,7 @@
     else if (runMod !== rt) note = `   # ${runMod === 'vision' ? 'still fed as a 1-frame clip' : 'frames sampled from the clip'} -> NeuroidAssembly`;
     else note = `   # -> neural:${REGION_FOR[runMod] || 'IT'} channel (NeuroidAssembly)`;
     return `subject = load_model(${id})\n` +
-      `assembly = score_stimuli(subject, ${stimVar}, record='${REGION_FOR[runMod] || 'IT'}')${note}`;
+      `assembly = neural_response(subject, ${stimVar}, record='${REGION_FOR[runMod] || 'IT'}')${note}`;
   }
 
   // ============================ rendering ============================
