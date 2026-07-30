@@ -89,9 +89,9 @@
   const err = (etype, msg, steps) => ({ ok: false, etype, msg, steps: steps || [] });
 
   // the named channel(s) a given input drives — inputs are framed by channel, not event type.
-  // ('{addr}' / '{region}' are placeholders, kept HTML-safe for innerHTML rendering.)
+  // ('{address}' / '{region}' are placeholders, kept HTML-safe for innerHTML rendering.)
   function channelLabel(inp) {
-    if (inp.event === 'StateChange') return 'lesion:{addr}';
+    if (inp.event === 'StateChange') return 'lesion:{address}';
     if (inp.event === 'EnvironmentStep') return 'vision + proprioception';
     const mods = Array.isArray(inp.modality) ? inp.modality : [inp.modality];
     return mods.join(' + ');
@@ -143,7 +143,9 @@
   // that's the sensible default, not the single-modality-priority fallback.
   function defaultMulti(model, input) {
     const inMods = Array.isArray(input.modality) ? input.modality : [input.modality];
-    return inMods.length > 1 && inMods.filter(m => model.available.includes(m)).length > 1;
+    // count towers that CONSUME each modality — a movie's `video` is consumed by
+    // the vision tower (video folds into vision), so a VLM runs vision + text, not text alone.
+    return inMods.length > 1 && inMods.filter(m => consumes(model, m)).length > 1;
   }
 
   // ---- capability classifier: what the ROUTER can do, not just what's wired today ----
@@ -231,13 +233,13 @@
       if (!C.state_change) {
         return err('NotImplementedError',
           `'${model.name}' has no state_change_fn registered, so it can't be lesioned/perturbed.`,
-          [procStep, S('decision', 'route lesion:{addr} channel', 'routes to state_change_fn — but none is registered')]);
+          [procStep, S('decision', 'route lesion:{address} channel', 'routes to state_change_fn — but none is registered')]);
       }
       return ok([
         procStep,
-        S('decision', 'route lesion:{addr} channel → state_change_fn', 'first channel-routing branch'),
+        S('decision', 'route lesion:{address} channel → state_change_fn', 'first channel-routing branch'),
         S('fn', 'state_change_fn(state_change)', 'resolve Selection (which units) → apply Perturbation (zero / scale / replace)', 'BrainScoreModel.state_change_fn'),
-        S('output', 'PerturbationApplied', 'emitted on the lesion:{addr} channel with a handle_id; apply_state_change(subject, StateChange(kind="reset", handle_id=…)) restores bit-for-bit')
+        S('output', 'PerturbationApplied', 'emitted on the lesion:{address} channel with a handle_id; apply_state_change(subject, StateChange(kind="reset", handle_id=…)) restores bit-for-bit')
       ], 'PerturbationApplied', 'Yeatman2021-induced_dyslexia (lesion the word-form units)', model);
     }
 
@@ -369,7 +371,7 @@
         `apply_state_change(subject, StateChange(target=sel, perturbation=Perturbation('zero')))   # -> ${result.etype}`;
       return `subject = load_model(${id})   # state_change_fn wired\n` +
         `handle = apply_state_change(subject, StateChange(target=sel, perturbation=Perturbation('zero')))\n` +
-        `# … observe the deficit on the lesion:<addr> channel … then restore bit-for-bit:\n` +
+        `# … observe the deficit on the lesion:<address> channel … then restore bit-for-bit:\n` +
         `apply_state_change(subject, StateChange(kind='reset', handle_id=handle.handle_id))`;
     }
     if (input.event === 'EnvironmentStep') {
