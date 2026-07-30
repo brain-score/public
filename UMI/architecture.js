@@ -9,7 +9,10 @@
 (function () {
   'use strict';
 
-  // MODALITY_PRIORITY tiebreak (single-modality dispatch), verbatim from core.
+  // MODALITY_PRIORITY tiebreak (single-modality dispatch). Core's tuple is
+  // ('vision','text','audio'); this demo appends 'video' as a distinct token
+  // because it teaches video as its own subject/wrapper, whereas core
+  // canonicalizes video into vision upstream (channel unification).
   const MODALITY_PRIORITY = ['vision', 'text', 'audio', 'video'];
 
   // ---- model archetypes: the capability profile each registration exposes ----
