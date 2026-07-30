@@ -9,11 +9,11 @@
 (function () {
   'use strict';
 
-  // MODALITY_PRIORITY tiebreak (single-modality dispatch). Core's tuple is
-  // ('vision','text','audio'); this demo appends 'video' as a distinct token
-  // because it teaches video as its own subject/wrapper, whereas core
-  // canonicalizes video into vision upstream (channel unification).
-  const MODALITY_PRIORITY = ['vision', 'text', 'audio', 'video'];
+  // MODALITY_PRIORITY tiebreak (single-modality dispatch), verbatim from core's
+  // ('vision','text','audio'). No 'video' entry: core canonicalizes video into
+  // vision upstream, and pickByPriority() below falls back to mods[0] for a lone
+  // 'video' input, so a video stimulus still routes to its visual tower.
+  const MODALITY_PRIORITY = ['vision', 'text', 'audio'];
 
   // ---- model archetypes: the capability profile each registration exposes ----
   // has: which dispatch slots / wrappers are present.
@@ -330,7 +330,7 @@
       S('decision', `_detect_modalities() → {${inMods.join(', ')}}`,
         useMulti ? `multiple input channels → fan out to every supported tower {${towers.join(', ')}}`
                  : (supported.length > 1
-                     ? `single-channel routing → MODALITY_PRIORITY (vision, text, audio, video) picks "${towers[0]}"; enable multiple input channels to use all of {${supported.join(', ')}}`
+                     ? `single-channel routing → MODALITY_PRIORITY (vision, text, audio) picks "${towers[0]}"; enable multiple input channels to use all of {${supported.join(', ')}}`
                      : (inMods.length > 1
                          ? `subject has a tower only for "${supported[0]}"; reads that channel, ignores the rest`
                          : 'single channel')))

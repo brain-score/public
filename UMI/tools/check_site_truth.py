@@ -36,13 +36,6 @@ DATA_JS = SITE_DIR / "data.js"
 APP_JS = SITE_DIR / "app.js"
 OVERVIEW_HTML = SITE_DIR / "overview.html"
 
-# 'video' is a deliberate site-only token: the demo teaches video as its own
-# subject/wrapper (VideoWrapper, V-JEPA, VideoMAE). Core drops it because it
-# canonicalizes video into vision upstream (channel unification). So the site's
-# MODALITY_PRIORITY is allowed to append exactly these tokens beyond core's.
-SITE_ONLY_MODALITIES = {"video"}
-
-
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
@@ -97,15 +90,14 @@ def check_capability_status_wiring():
 # ── cross-repo checks ────────────────────────────────────────────────────────
 
 def check_modality_priority_vs_source(source_root: Path):
-    """Site tiebreak order must match core's, and may only append the documented
-    site-only tokens (video)."""
+    """Site tiebreak must equal core's exactly. (It is not allowed to append
+    'video' — core canonicalizes video into vision upstream, and the site's
+    pickByPriority() falls back to mods[0] for a lone video input, so a video
+    stimulus routes correctly without a priority entry. Re-adding 'video' here
+    would re-introduce the 'verbatim from core' drift this guard exists to catch.)"""
     site = _site_modality_priority()
     core = _source_modality_priority(source_root)
-    assert site[:len(core)] == core, (
-        f"site MODALITY_PRIORITY prefix {site[:len(core)]} != core {core}")
-    extra = set(site) - set(core)
-    assert extra <= SITE_ONLY_MODALITIES, (
-        f"site MODALITY_PRIORITY has undocumented extra tokens {extra - SITE_ONLY_MODALITIES}")
+    assert site == core, f"site MODALITY_PRIORITY {site} != core {core}"
 
 
 def check_source_abc_definition(source_root: Path):
