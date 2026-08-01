@@ -60,21 +60,24 @@
   <p class="act-eyebrow">Act 1 · for everyone</p>
   <h2 class="act-h">What can you ask a model?</h2>
   <p class="act-lead">One hand-off, an escalating set of questions: predict the brain, match a
-    behavior, act in a world, and intervene on the model itself — each shown with its score.</p>
+    behavior, act in a world, and intervene on the model itself — most shown with a score,
+    each on its own scale.</p>
 </section>
 
-<section id="act-science" data-toc="The science" data-order="100" data-tier="act2" class="act-band">
-  <p class="act-eyebrow">Act 2 · for the scientific reader</p>
-  <h2 class="act-h">Are the scores meaningful — and what's interesting?</h2>
-  <p class="act-lead">The same capabilities, examined: scores compared across methods, every
-    result checked against a deliberately-broken baseline, and tools to watch a model think.</p>
+<section id="act-science" data-toc="Capability demos" data-order="100" data-tier="act2" class="act-band">
+  <p class="act-eyebrow">Act 2 · demos, for the scientific reader</p>
+  <h2 class="act-h">Demos of Brain-Score capabilities</h2>
+  <p class="act-lead">Each section below demonstrates one capability end to end: pick the layers
+    to record from, fuse two senses, select word-selective units, watch what the model was actually
+    handed, score a model released this week. Every one is checked against a deliberately-broken
+    version of itself.</p>
 </section>
 
 <section id="capabilities" data-toc="The hand-off" data-order="10" data-tier="act1" class="section">
   <h2>One simple hand-off, every kind of test</h2>
   <p class="lead">Every model is treated the same way: you hand it an input (a set of
     images, a sentence, a sound, a video, a moment in a game, even a switched-off part
-    of the model) and it hands back a response (where the brain lights up, a choice, an
+    of the model) and it hands back a response (a predicted brain response, a choice, an
     action, or a written answer). The kind of input decides what's being tested; the kind
     of response tells you how it did. That single, shared hand-off is what lets one model
     run on every compatible test below.</p>
@@ -113,22 +116,30 @@
 </section>
 
 <section id="response" data-toc="Brain response" data-order="20" data-tier="act1" class="section">
-  <h2>Show it something, see where the brain lights up</h2>
-  <p class="lead">Pick a kind of input below. The map shows roughly where in the brain
-    that kind of input drives activity: the part of the brain a model is then asked to predict.</p>
+  <h2>Every kind of input, and the benchmark it is tested on</h2>
+  <p class="lead">Pick a kind of input below. Each one names the registered benchmark that
+    tests it, so the claim is checkable rather than a schematic. The last entry is hours of
+    continuous viewing rather than a clip: many episodes and films, each sampled at the
+    brain's own rate and answered snapshot by snapshot (handed over as one set, not fed
+    in live). Each also carries the score a real model got, and &mdash; because these
+    benchmarks are not all normalized the same way &mdash; what that score actually is.
+    Read the scale line before comparing any two: a &ldquo;share of the noise ceiling&rdquo;
+    number and a raw correlation are not on the same axis.</p>
   <div class="response-wrap">
     <div class="input-toggles" id="input-toggles"></div>
     <div class="response-panel">
       <figure class="illus-fig">
         <span class="illus-badge">illustrative</span>
         <img id="cortex-img" src="assets/cortex_demo.png?v=3" alt="predicted cortical response (illustrative)" />
-        <figcaption id="cortex-cap">Illustrative: roughly where in the brain this kind of input is predicted to drive activity, drawn on a standard brain surface by our own visualization tools.</figcaption>
+        <figcaption id="cortex-cap">Orientation only: roughly which part of the brain this kind of input drives, drawn on a standard surface. It is a schematic of where this kind of input drives activity, not a result &mdash; the result is the measured score beside it, on the scale named beneath it. Inputs scored on behavior rather than on predicting the brain show no map at all.</figcaption>
       </figure>
       <div class="response-text">
         <h3 id="resp-type"></h3>
         <p id="resp-desc"></p>
-        <div class="kv"><span>test</span><b id="resp-bench"></b></div>
+        <div class="kv"><span>benchmark</span><b id="resp-bench"></b></div>
         <div class="kv"><span>example input</span><b id="resp-example"></b></div>
+        <div class="kv"><span>measured score</span><b id="resp-score"></b></div>
+        <div class="kv"><span>what that score is</span><b id="resp-scale"></b></div>
       </div>
     </div>
   </div>
@@ -175,7 +186,7 @@
   <div class="raj-caveats" id="mb-caption"></div>
 </section>
 
-<section id="leaderboard" data-toc="Public leaderboard" data-order="35" data-tier="act1" class="section">
+<section id="leaderboard" data-toc="External cross-check" data-order="185" data-tier="act2" class="section">
   <h2 id="lb-title"></h2>
   <p class="lead" id="lb-sub"></p>
   <div class="two-col">
@@ -467,12 +478,19 @@
 <section id="ablation" data-toc="Dyslexia" data-order="60" data-tier="act1" class="section alt">
   <h2>Switching off a model's word-selective units: giving it "dyslexia"</h2>
   <p class="lead">We switch off the model's word-selective units, re-test its reading, then
-    switch them back on (it restores perfectly). The result reproduces a 2026 study:
-    in a large enough model, switching off the word-selective units pushes its reading below
+    switch them back on (it restores perfectly). Two papers sit behind this. The reading
+    test and its human scores come from <b>Yeatman et al. (2021)</b>, the ROAR
+    &ldquo;Rapid online assessment of reading ability&rdquo; (<i>Scientific Reports</i> 11:6396); the idea of inducing
+    dyslexia by switching off word-selective units, and the controls that make it
+    credible, come from <b>Honarmand et al. (2026)</b>, &ldquo;Inducing Dyslexia in
+    Vision Language Models&rdquo; (ICLR). The result reproduces
+    the latter: in a large enough model, switching off the word-selective units pushes its reading below
     the dyslexia line, while switching off the same number of random neurons barely
     matters. And the effect only appears once the model is big enough.</p>
   <div class="two-col">
     <div class="two-col-stack">
+      <div id="ablation-dissoc-plot" class="plot"></div>
+      <p class="muted small" id="ablation-dissoc-note"></p>
       <div id="ablation-plot" class="plot"></div>
       <figure class="lesion-brain">
         <img id="lesion-brain-img" src="assets/vwfa_glass.png?v=3" alt="the brain's reading area, highlighted" />
@@ -488,10 +506,16 @@
 </section>
 
 <section id="scaling" data-toc="Bigger models" data-order="70" data-tier="act1" class="section alt">
-  <h2>Better models, better scores</h2>
-  <p class="lead">A test worth running should reward better models and sit near its
-    "knows-nothing" floor for an untrained one. That's the basic sanity check: pick a
-    capability and see whether the scores climb the way they should.</p>
+  <h2>Does a more capable AI predict the brain better?</h2>
+  <p class="lead">"Better" here means better at ordinary AI work &mdash; more parameters,
+    more training, higher scores on the usual machine-learning tasks &mdash; judged
+    without reference to any brain data, so this isn't a test grading itself. The one
+    thing we do demand of a test is that an untrained model sits near the floor. Whether
+    the capable models then climb is the open question, and the answer differs by test:
+    on reading and on behavior the ladder does go up with capability, while on object
+    vision the smallest model here (CLIP ViT-B/32) beats models more than an order of
+    magnitude larger. What a model was trained to do turns out to matter more than how
+    big it is &mdash; which is a finding, not a sanity check.</p>
   <div class="scaling-wrap">
     <div class="scaling-tabs" id="scaling-tabs"></div>
     <div id="scaling-plot" class="plot"></div>
@@ -565,8 +589,9 @@
 
 <section id="limitations" data-toc="What to keep in mind" data-order="300" data-tier="always" class="section">
   <h2 id="lim-title">What to keep in mind</h2>
-  <p class="lead">Every result on this page also has its caveats &mdash; where it is shaky, not
-    fully controlled, or only shows that the machinery runs. They are listed here, in plain terms.</p>
+  <p class="lead">What each result on this page does not establish: the controls we have not
+    run yet, the comparisons that are not like-for-like, and the places where a number
+    demonstrates that a capability works rather than how well it works.</p>
   <ul class="lim-list" id="lim-list"></ul>
 </section>
 
@@ -584,8 +609,8 @@
   <div class="muted small" id="provenance"></div>
 </footer>
 
-<script src="data.js?v=28"></script>
-<script src="app.js?v=22"></script>
+<script src="data.js?v=29"></script>
+<script src="app.js?v=23"></script>
 <script src="model_moves.js?v=2"></script>
 <script src="game.js?v=2"></script>
 <script src="audience.js?v=5"></script>

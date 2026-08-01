@@ -37,6 +37,7 @@ window.BSU_DATA = {
   "scaling": {
     "language_encoding": {
       "capability": "Predicting the brain: reading sentences (Pereira 2018)",
+      "metric": "Brain-Score (share of the noise ceiling)",
       "models": ["random-vit", "CLIP-B32", "GPT-2", "Qwen-3B", "BLIP-2"],
       "scores": [0.123, 0.464, 0.531, 0.708, 0.737],
       "null_floor": 0.123,
@@ -44,6 +45,7 @@ window.BSU_DATA = {
     },
     "it_encoding": {
       "capability": "Predicting the brain: seeing objects (MajajHong 2015)",
+      "metric": "Brain-Score (share of the noise ceiling)",
       "models": ["random-vit", "Qwen-3B", "BLIP-2", "CLIP-B32"],
       "scores": [0.104, 0.315, 0.334, 0.374],
       "null_floor": 0.104,
@@ -51,15 +53,17 @@ window.BSU_DATA = {
     },
     "video_encoding": {
       "capability": "Predicting the brain: watching video (Lahner 2024 BOLDMoments)",
+      "metric": "Brain-Score (share of the noise ceiling)",
       "models": ["BLIP-2", "Qwen-3B", "VideoMAE", "V-JEPA2", "CLIP-B32", "V-JEPA1"],
-      "scores": [0.180, 0.227, 0.321, 0.421, 0.456, 0.533],
-      "ci_lo": [0.1765, 0.2233, 0.3142, 0.4146, 0.4507, 0.5276],
-      "ci_hi": [0.1829, 0.2303, 0.3275, 0.4283, 0.4611, 0.5382],
-      "null_floor": 0.05,
-      "reading": "How well each model predicts a brain watching short videos. The standout is V-JEPA v1, a video model trained to predict its own internal picture of a scene rather than to reproduce the exact pixels (VideoMAE, which does the pixel version, lands lower). So how a video model is trained matters more than whether it handles motion 'natively.' One honesty note: an earlier ranking had CLIP ahead of V-JEPA v2, and we checked whether that was just an unlucky choice of which internal layer to read. It wasn't (we tried every layer; the gap is real). The error bars are 95% bootstrap intervals over voxels: they don't overlap between V-JEPA v1, CLIP, and V-JEPA v2, so that ordering is a real difference, not noise. These are raw match scores, not adjusted for how noisy each voxel is."
+      "scores": [0.250, 0.312, 0.445, 0.587, 0.634, 0.731],
+      "ci_lo": [0.2464, 0.3075, 0.4393, 0.5802, 0.6288, 0.7272],
+      "ci_hi": [0.2534, 0.3157, 0.4518, 0.5923, 0.6381, 0.7377],
+      "null_floor": 0.0685,
+      "reading": "How well each model predicts a brain watching short videos. The standout is V-JEPA v1, a video model trained to predict its own internal picture of a scene rather than to reproduce the exact pixels (VideoMAE, which does the pixel version, lands lower). So how a video model is trained matters more than whether it handles motion 'natively.' One honesty note: an earlier ranking had CLIP ahead of V-JEPA v2, and we checked whether that was just an unlucky choice of which internal layer to read. It wasn't (we tried every layer; the gap is real). The error bars are 95% bootstrap intervals over voxels: they don't overlap between V-JEPA v1, CLIP, and V-JEPA v2, so that ordering is a real difference, not noise. These scores ARE adjusted for how noisy the brain data is: each one is divided by the noise ceiling, the best score any model could possibly reach given how much the recordings themselves vary between repeats of the same clip. V-JEPA v1's 0.73 means it gets about 73% of the way to that ceiling. (That is 73% of the achievable match, not 73% of the signal explained -- squaring it gives the variance-explained figure, nearer 53%.) The adjustment puts these on the same footing as the object-vision and sentence-reading tests above."
     },
     "behavior_roar": {
       "capability": "Behavior: real vs. fake words (ROAR / Yeatman 2021)",
+      "metric": "accuracy (chance = 0.50)",
       "models": ["chance", "random-vit", "CLIP-B32", "BLIP-2", "GPT-2", "Qwen-3B"],
       "scores": [0.500, 0.540, 0.680, 0.790, 0.810, 0.930],
       "null_floor": 0.540,
@@ -67,6 +71,7 @@ window.BSU_DATA = {
     },
     "embodied_game": {
       "capability": "Playing: grid video game",
+      "metric": "win rate",
       "models": ["random moves", "Qwen-VL 3B (CoT)", "Qwen-VL 7B (CoT)", "Gemma-4 12B (CoT)", "DeepSeek-R1 (ASCII)", "perfect player"],
       "scores": [0.20, 0.0, 0.53, 1.0, 0.87, 1.0],
       "null_floor": 0.20,
@@ -74,6 +79,7 @@ window.BSU_DATA = {
     },
     "multimodal_algonauts": {
       "capability": "Predicting the brain: watching a movie (Algonauts 2025 / CNeuroMod)",
+      "metric": "raw correlation, NOT ceiling-normalized — compare bars to each other only",
       "models": ["text-only", "video-only", "audio-only", "combined", "banded (per-sense)"],
       "scores": [0.120, 0.150, 0.157, 0.186, 0.213],
       "null_floor": 0.05,
@@ -154,7 +160,7 @@ window.BSU_DATA = {
       "The video-game size comparison (small → medium → large) is only 15 games on a small board, a clear trend but a demonstration, not a precise law. And it's one specific game; a harder maze game gives very different numbers and isn't interchangeable.",
       "The 'brain map' visual that places model neurons on a cortex layout has only been checked on made-up test data, not real brain scans, and isn't part of any scored test.",
       "We reach the published movie-prediction range but not the very best published number (~0.32). We haven't run the controlled experiment that would say whether that gap is the model or the pipeline.",
-      "The brain-prediction scores are raw correlations, not adjusted for how noisy each spot in the brain is, and we don't yet have error bars, so small differences between models may not be meaningful.",
+      "Scores on this page are not all on one scale. Some are adjusted for how noisy each spot in the brain is and some are not; a few are accuracies or win rates rather than brain predictions at all. Each plot and table states its own scale, and that label is the one to trust — do not compare a number from one section against a number from another unless both say the same thing. Where a figure quotes a published result alongside ours, assume the two were computed differently unless it says otherwise. We also don't yet have error bars, so small differences between models may not be meaningful. We also don't yet have error bars, so small differences between models may not be meaningful.",
       "The 'dyslexia' effect depends on model size: it doesn't show up in the small model, barely in the medium, and clearly only in the large (32B) one. The original study saw it in an even larger model with an even gentler nudge; we haven't run that largest model."
     ]
   },
@@ -168,12 +174,12 @@ window.BSU_DATA = {
     "reading": "A check that we're lining things up in time correctly. When you see or hear something, your brain's response shows up in a scanner a few seconds late, because blood flow takes time to catch up to the neurons. So the AI's read on each moment of the movie only matches the brain scans when we nudge it forward by that few-second delay. The match is strongest at exactly that nudge (about 4.5 seconds) and falls off when we slide it too early or too late, in both directions. If the match had nothing to do with the movie, this curve would be flat. It isn't, which is the reassurance we wanted. (The dashed line is the match score after we deliberately scramble the timing, i.e. the no-signal floor.)"
   },
   "movie_brain": {
-    "title": "Recorded vs. predicted BOLD for a held-out movie clip",
-    "subtitle": "A real person watched a 10-second clip from the TV show Friends (picture, sound, and dialogue) inside an fMRI scanner that recorded their brain. We can't show the clip itself here (it's licensed footage), but we asked an AI model to predict that brain response from the very same clip. Top brain: what the person's brain actually did. Bottom brain: what the model predicted, for a clip it was never trained on. The two maps won't look pixel-for-pixel identical: the agreement is statistical (a correlation across the whole brain), and the curve below tracks how strong that match is snapshot by snapshot (each map is a snapshot of the whole brain at that moment).",
+    "title": "The brain we recorded, and the brain a model predicted, for a clip it had never seen",
+    "subtitle": "What this benchmark asks: given a movie the model has never seen, predict the brain activity it produced — one prediction per brain snapshot, scored against the real recording. That is the whole task. Concretely: a real person watched a 10-second clip from the TV show Friends (picture, sound, and dialogue) inside a scanner that recorded their brain activity. We can't show the clip itself here (it's licensed footage), but we asked a model to predict that brain response from the very same clip. Top brain: what the person's brain actually did. Bottom brain: what the model predicted, for a clip it was never trained on. The two maps won't look pixel-for-pixel identical: the agreement is statistical (a correlation across the whole brain), and the curve below tracks how strong that match is snapshot by snapshot (each map is a snapshot of the whole brain at that moment).",
     "human": "assets/movie_brain_real/human/bold_",
     "tabs": [
-      {"id": "tribe", "label": "TRIBEv2: three separate encoders combined", "model": "assets/movie_brain_real/model_tribe/bold_", "per_tr_r": [0.2825, 0.2102, 0.2143, 0.2169, 0.0562, 0.2749, 0.2863], "mean_r": 0.220},
-      {"id": "qwen", "label": "Qwen3-Omni: one native multimodal model", "model": "assets/movie_brain_real/model_qwen/bold_", "per_tr_r": [0.1957, -0.0535, 0.1526, 0.1402, 0.3138, 0.4096, 0.374], "mean_r": 0.219}
+      {"id": "qwen", "label": "MIRAGE (ours): one model takes picture, sound and words in together", "model": "assets/movie_brain_real/model_qwen/bold_", "per_tr_r": [0.1957, -0.0535, 0.1526, 0.1402, 0.3138, 0.4096, 0.374], "mean_r": 0.219},
+      {"id": "tribe", "label": "TRIBEv2 (Meta's): three separate specialists, stitched together", "model": "assets/movie_brain_real/model_tribe/bold_", "per_tr_r": [0.2825, 0.2102, 0.2143, 0.2169, 0.0562, 0.2749, 0.2863], "mean_r": 0.220}
     ],
     "n": 7,
     "tr_sec": 1.49,
@@ -181,12 +187,12 @@ window.BSU_DATA = {
     "transcript": ["spoken", "dialogue", "from", "the", "clip", "(not", "shown)"],
     "times": [29.8, 31.3, 32.8, 34.3, 35.8, 37.2, 38.7],
     "note": "Red = a spot more active than this clip's average; blue = less active. Both brains are drawn on the same scale so you can compare them side by side; what matters is the shape of the response (which areas light up where), not the exact brightness. How close they are is captured by the single match score (≈0.22); it's measured over just 7 brain snapshots here, so treat it as rough, since the model was tuned on far more data than this short window.",
-    "reading": "Use the two tabs to switch which AI model is doing the predicting. The first, 'TRIBEv2,' is really three separate encoders working together (one model for the picture, one for the sound, one for the words) whose outputs we stitch together. The second, 'Qwen3-Omni,' is a single model that takes picture, sound, and words in all at once. The interesting part: on this clip they predict the brain about equally well (a match score of 0.22 either way), so combining the senses inside one model doesn't beat three good specialists here. The match score runs from 0 (no better than chance) to about 0.4 (roughly the ceiling for today's models on this kind of data), so 0.22 is a real, if modest, match. One nuance worth knowing: the brain's response to what you see or hear shows up in a scanner a few seconds late (blood flow lags the neural activity), and the model builds that same delay in, so the two brains are lined up correctly in time and you're comparing like with like.",
+    "reading": "Use the two tabs to switch which model is doing the predicting. The first, MIRAGE, is ours: a single model (built on Qwen3-Omni) that takes picture, sound, and words in all at once, so the senses mix inside it. The second, TRIBEv2, is Meta's released brain encoder, and is really three separate specialists (one for the picture, one for the sound, one for the words) whose outputs we stitch together afterwards. On this clip they predict the brain about equally well (a match score of 0.22 either way), so mixing the senses inside one model doesn't beat three good specialists here. The match score runs from 0 (no better than chance) to about 0.4 (roughly the ceiling for today's models on this kind of data), so 0.22 is a real, if modest, match. One timing detail: the brain's response to what you see or hear shows up in a scanner a few seconds late (blood flow lags the neural activity), and the model builds that same delay in, so the two brains are lined up correctly in time and you're comparing like with like.",
     "caption": "Why this is a fair test: the model was trained on other Friends episodes and never saw this clip, so the bottom brain is a genuine prediction, not a replay. The top brain is the real recorded scan. The Friends footage belongs to the research dataset (Algonauts / Courtois NeuroMod) and isn't reproduced here, since it's licensed. (The clip is about 10 seconds: 7 brain snapshots, one roughly every 1.5 seconds.)"
   },
   "leaderboard": {
-    "title": "Putting it on the public scoreboard",
-    "subtitle": "Everything else on this page is scored on our own tests. The Algonauts 2025 challenge is the outside check: predict a person's brain response while they watch movies, graded by the organizers on footage the model never sees. We entered a model assembled entirely through the single hand-off (one encoder for the picture, one for the sound, one for the dialogue, their outputs combined to predict the brain) and submitted it to the live public leaderboard.",
+    "title": "A cross-check on our own scoring",
+    "subtitle": "Our own benchmarks are the substance of this page: MajajHong for object vision, Pereira for sentence reading, Lahner for short video, ROAR for reading behavior. Each is scored on its own scale and reported in its own section below, since they are not normalized the same way. Algonauts 2025 is one more of them, run through the same hand-off — with the difference that the challenge organizers hold the answers and grade the submission themselves. So it doubles as a check that our own scoring isn't flattering us: we predicted a score before submitting, and the graded score came back where we expected. The model is one encoder for the picture, one for the sound, one for the dialogue, their outputs combined to predict the brain.",
     "indist_title": "New episodes of a familiar show",
     "indist_bars": [
       {"label": "challenge baseline", "v": 0.20},
@@ -206,7 +212,7 @@ window.BSU_DATA = {
     "ood_avg": 0.120,
     "ood_top": 0.23,
     "ood_note": "Average across films 0.12 (dashed line); the best published out-of-distribution result is about 0.23. Hardest on the silent black-and-white Chaplin clip (no dialogue, and footage unlike anything modern encoders are built for) and easiest on the animated film.",
-    "reading": "Two things matter here. **First, this is the real test:** an outside leaderboard, graded on footage we never touched, by the people who built the benchmark, not our own scoring. A model wired together through the same hand-off as every other test on this page clears the published baseline on familiar material (0.23 vs about 0.20), and its score on held-out episodes matches what we'd measured on our own beforehand, so nothing was quietly overfit. **Second, the honest gap:** on genuinely new films the score roughly halves (0.12), well short of the best published ~0.23. That out-of-distribution gap is exactly where a stronger video encoder, or a purpose-built multimodal model like the challenge winner, earns its keep, and it's the next thing we're wiring in. The headline isn't that we won; it's that one model, assembled the same way as everything else here, lands on a public neuroscience leaderboard above its baseline.",
+    "reading": "Two things matter here. **First, our own numbers held up under someone else's grading:** before submitting we measured 0.213 across parcels on held-out episodes (0.237 if you average rather than take the middle value), and the organizers graded the submission at 0.229 on their own metric. Those are consistent, though not a like-for-like match, since our summary and theirs are computed differently. The reassurance is that nothing moved much once someone else did the grading. The same model clears the challenge's published baseline on familiar material (0.23 vs about 0.20). **Second, the honest gap:** on genuinely new films the score roughly halves (0.12), well short of the best published ~0.23. That out-of-distribution gap is exactly where a stronger video encoder, or a purpose-built multimodal model like the challenge winner, earns its keep, and it's the next thing we're wiring in. The result to take away: one model, assembled the same way as everything else on this page, lands on a public neuroscience leaderboard above its baseline.",
     "caption": "How it was built: trained to predict four people's brain responses to earlier Friends episodes from the same picture + sound + dialogue features, then asked to predict held-out Season 7 episodes (the 'familiar show' test) and six entirely new films (the 'never seen' test). Scores are the challenge's own metric: a correlation between predicted and recorded brain activity, averaged across the brain and the four people."
   },
   "nulls": {
@@ -231,9 +237,10 @@ window.BSU_DATA = {
     "vwf_control": [0.87, 0.87, 0.87, 0.80],
     "random_control": [0.87, 0.87, 0.80, 0.80],
     "threshold": 0.65,
-    "brain_caption": "Where this lands in a real brain: the model's word-selective units line up with the brain's actual reading area, a patch on the lower-left of the human brain (the 'Visual Word Form Area') that's known to be central to reading. This picture highlights that patch, the territory effectively switched off when we disable the model's word-selective units.",
+    "dissociation_note": "This is the definition of dyslexia in one picture: reading falls below the threshold while general ability is left broadly intact. Switching off the word-selective units drops real-vs-fake-word accuracy from 0.98 to 0.54, past the 0.65 line, while a separate non-reading task only slips from 0.87 to 0.80. A model that had simply been damaged would lose both. The curve below shows how the effect builds up as more units are switched off.",
+    "brain_caption": "Where this lands in a real brain: the model's word-selective units line up with the brain's actual reading area, a patch on the lower-left of the human brain (the 'Visual Word Form Area') that's known to be central to reading. This picture highlights that patch, the territory effectively switched off when we disable the model's word-selective units. There is no colour scale on this figure and nothing is being measured by it: the shading is a fixed anatomical outline of where the area sits, not a map of any quantity.",
     "scale_note": "It only works once the model is big enough. The small model (3B) doesn't show it. The medium one (7B) bends the right way but not enough. Only the large one (32B, shown) clearly tips into 'dyslexic.' That mirrors the original study, where an even larger model needed an even smaller nudge: the bigger the model, the less damage it takes.",
-    "reading": "It works: switching off the word-selective units drops the model's reading accuracy to 0.54, past the line (0.65) below which a human would be called dyslexic, while switching off the same number of random neurons barely dents it (0.89), and a separate non-reading task is left mostly intact. So we didn't just make the model worse at everything; we made it specifically bad at reading, the way dyslexia is specific. And the effect only appears once the model is large enough (see the note at left).\n\nThis is now a built-in Brain-Score test (the Yeatman2021-induced_dyslexia benchmark): it automatically finds the word-selective units, switches them off, and, crucially, checks the random-neuron control before declaring 'dyslexia,' so simply damaging the model in a clumsy way never gets mistaken for the real, specific effect. We verified end-to-end that the control does its job: when an overly-broad switch-off hurt reading non-specifically, the test correctly refused to call it dyslexia."
+    "reading": "Switching off the word-selective units drops the model's reading accuracy to 0.54, past the line (0.65) below which a human would be called dyslexic, while switching off the same number of random neurons barely dents it (0.89), and a separate non-reading task is left mostly intact. So we didn't just make the model worse at everything; we made it specifically bad at reading, the way dyslexia is specific. And the effect only appears once the model is large enough (see the note at left).\n\nThis is now a built-in Brain-Score test (the Yeatman2021-induced_dyslexia benchmark): it automatically finds the word-selective units, switches them off, and checks the random-neuron control before declaring 'dyslexia,' so simply damaging the model in a clumsy way never gets mistaken for the real, specific effect. We verified end-to-end that the control does its job: when an overly-broad switch-off hurt reading non-specifically, the test correctly refused to call it dyslexia."
   },
   "selection": {
     "capability": "Gathering a model's 'reading' neurons from wherever they live",
@@ -267,7 +274,7 @@ window.BSU_DATA = {
     "current_layer": 16,
     "budget_curve": {
       "x_title": "number of neurons used to read the model",
-      "y_title": "Brain-Score (0–1)",
+      "y_title": "ceiling-normalized score (0–1)",
       "budgets": [16, 32, 64, 100, 128, 256, 512, 1024],
       "within": [0.6224, 0.6645, 0.6992, 0.7200, 0.7307, 0.7470, 0.7689, 0.7765],
       "within_random": [0.4672, 0.5873, 0.6566, 0.7023, 0.7169, 0.7485, 0.7685, 0.7765],
@@ -286,10 +293,10 @@ window.BSU_DATA = {
     ],
     "heatmap_img": "assets/vjepa2_unit_heatmap.png",
     "cachebust": "2",
-    "heatmap_caption": "A map of how well each individual neuron, layer by layer, predicts the brain (brighter = better). The best neurons sit in the middle-to-late layers, but the curve on the right shows the twist: once you read a few hundred of them together, hand-picking the best stops mattering, because the signal is spread across the whole layer.",
+    "heatmap_caption": "A map of how strongly each individual neuron, layer by layer, tracks the brain (brighter = better). Note this panel alone is measured differently from every score elsewhere on the page: it is each neuron's direct correlation with its best-matching voxel, not a fitted, held-out prediction, and it is not ceiling-divided \u2014 so read it as a map of where signal sits, not as a score. The best neurons sit in the middle-to-late layers, but the curve on the right shows the twist: once you read a few hundred of them together, hand-picking the best stops mattering, because the signal is spread across the whole layer.",
     "reading": "Done properly, a clear winner emerges. (1) THE SIMPLEST WAY WINS: reading the whole best layer scores 0.78 out of a possible 1.0, and nothing beats it. (The earlier impression that 'hand-picking the best neurons' won was purely an artefact of an untuned readout; with the readout tuned properly it disappears.) (2) HAND-PICKING ONLY HELPS WHEN YOU MUST BE COMPACT: with just 16 neurons, the best ones crush a random 16 (0.62 vs 0.47), but that edge shrinks as you add more, and by about 256 neurons (a quarter of the layer) picking the best is no better than picking at random, because the signal is spread redundantly across the layer. (3) SPREADING ACROSS LAYERS DOESN'T HELP HERE: the single best layer already holds the signal, so pooling across the top layers (or reading several whole layers) lands a hair lower, not higher. Bottom line for this model: use the whole best layer for the best score, and reach for neuron-picking only when you need a small, fast readout and can trade a sliver of accuracy. (This is the opposite of the dyslexia experiment, where picking the right neurons mattered at every size; there the signal lived in special, localised 'reading' neurons.)",
     "deep_dive": {
-      "title": "Going deeper: is one layer really enough? (three stress-tests)",
+      "title": "Going deeper: is one layer really enough? (three stress-tests; where these cards show a score it is ceiling-normalized, unlike the raw layer-sweep chart above — the middle card is a count of dimensions, not a score)",
       "lead": "\"One layer is plenty\" is a surprising result, so we checked it three ways, and they all point to the same simple reason.",
       "cards": [
         {"stat": "+0.01", "title": "Combine all 24 layers, optimally", "body": "We let a method blend all 24 layers with the best possible per-layer weights. It beats the single best layer by only a hair (0.785 vs 0.776). So even the smartest way of combining layers barely helps: one layer already has nearly everything."},
@@ -299,7 +306,7 @@ window.BSU_DATA = {
       "pc_chart": {
         "title": "How well the model predicts each of the brain's main patterns",
         "x_title": "the brain's patterns, most common → least",
-        "y_title": "match (0–1)",
+        "y_title": "raw correlation (not ceiling-normalized)",
         "labels": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
         "r": [0.78,0.86,0.84,0.79,0.71,0.60,0.73,0.74,0.61,0.53,0.68,0.61,0.54,0.63,0.64,0.32,0.29,0.53,0.44,0.48],
         "caption": "The model nails the brain's most prominent patterns (the first four at 78–86%) and fades out toward the rarer ones. In total about 35 of the brain's patterns are predictable; that handful is the entire brain-matching signal, which is why one well-chosen layer captures it all."
@@ -310,7 +317,7 @@ window.BSU_DATA = {
     "title": "Does this hold up beyond one benchmark?",
     "subtitle": "We re-ran the whole layer-mapping analysis across six brain datasets (single neurons and fMRI; seeing, reading, watching short video), five kinds of AI model, and a dataset 12× larger than the others. The same picture held up everywhere, and the one thing we expected to change it didn't.",
     "dim_title": "The brain signal stays simple, no matter how much data you throw at it",
-    "dim_note": "Each brain area's response to images boils down to only about 10–22 effective dimensions. Crucially, feeding the analysis 25× more pictures (243 → 6,000) doesn't raise that number, so it's a real property of the brain, not a shortage of data. This is exactly why a single well-chosen model layer is enough to capture it, everywhere we looked.",
+    "dim_note": "Each brain area's response to images boils down to only about 10–22 effective dimensions. Feeding the analysis 25× more pictures (243 → 6,000) doesn't raise that number, so it's a real property of the brain, not a shortage of data. This is exactly why a single well-chosen model layer is enough to capture it, everywhere we looked.",
     "dim_bars": [
       {"label": "reading sentences", "n": 243, "dim": 21.5},
       {"label": "natural scenes (NSD)", "n": 515, "dim": 20.1},
@@ -424,12 +431,13 @@ window.BSU_DATA = {
     "answer": "CLIP scores 0.68 by the first route, reading its features, even though it can't write an answer. Its caption-matching training left it sensitive to what real words look like. The honest way to read that 0.68 is against the floors: pure guessing is 0.50 and an untrained model is 0.54, so CLIP's score is +0.14 of genuine learned word-knowledge above what you'd get for free, not the scoring trick overfitting."
   },
   "inputs": [
-    {"type": "image", "example": "a natural photograph", "benchmark": "object-vision brain data (MajajHong 2015)", "desc": "A still photo. This lights up the brain's object-recognition areas (toward the back and bottom), and we test how well a model predicts them."},
-    {"type": "text", "example": "a sentence", "benchmark": "sentence-reading brain data (Pereira 2018)", "desc": "A written sentence. This drives the brain's language network (left side), which a text model's responses can predict."},
-    {"type": "audio", "example": "a speech / environmental sound clip", "benchmark": "sound brain data (Lahner 2024 · Algonauts)", "desc": "A sound clip. This drives the hearing areas (along the sides), which a speech/sound model can predict."},
-    {"type": "video", "example": "a 3-second clip", "benchmark": "short-video brain data (Lahner 2024)", "desc": "A short video. This drives the motion- and object-sensitive visual areas; models built for video do best here."},
-    {"type": "video + audio", "example": "a movie segment", "benchmark": "movie brain data (Algonauts 2025)", "desc": "Picture plus sound together. Adding the sound extends the prediction from the seeing areas into the hearing areas."},
-    {"type": "video + audio + text", "example": "a movie scene with dialogue + subtitles", "benchmark": "movie brain data (Algonauts 2025)", "desc": "The full movie experience: picture, sound, and dialogue. Together these drive much of the brain, and combining all three predicts it best. This is the real movie-watching test."}
+    {"type": "image", "score": "0.374", "scored_with": "CLIP ViT-B/32", "scale": "share of the noise ceiling (untrained floor 0.104)", "cortex": "cortex_image.png", "example": "a natural photograph", "benchmark": "MajajHong2015public.IT-pls — monkey inferior-temporal recordings", "desc": "A still photo. The model returns its response to each photo and we ask how much of the recorded IT response that predicts."},
+    {"type": "text", "score": "0.737", "scored_with": "BLIP-2 OPT-2.7B", "scale": "share of the noise ceiling (untrained floor 0.123)", "cortex": "cortex_text.png", "example": "a sentence", "benchmark": "Pereira2018.243sentences-linear — human language-network fMRI", "desc": "A written sentence. The model returns its response to each sentence, scored against the language network's."},
+    {"type": "audio", "score": "0.157", "scored_with": "Wav2Vec2-base", "scale": "raw correlation, not ceiling-divided", "cortex": "cortex_audio.png", "example": "a speech / environmental sound clip", "benchmark": "Algonauts2025-friends-sub01, sound tower only", "desc": "A sound clip. Sound alone already predicts a meaningful slice of the movie-watching response."},
+    {"type": "video", "score": "0.731", "scored_with": "V-JEPA v1 ViT-L", "scale": "share of the noise ceiling (measured 2026-07-31)", "cortex": "cortex_real_video_left_lateral.png", "cortex_measured": true, "example": "a 3-second clip", "benchmark": "Lahner2024-fMRI-naturalistic-visualROI — BOLDMoments", "desc": "A short video. The best video model here beats the best still-image model on the same voxels."},
+    {"type": "video + audio", "score": "0.461", "scored_with": "V-JEPA v1 + Wav2Vec2", "scale": "raw correlation, not ceiling-divided", "cortex": "cortex_real_videoaudio_left_lateral.png", "cortex_measured": true, "example": "a 3-second clip with its soundtrack", "benchmark": "Lahner2024-fMRI-naturalistic-multimodal-visualROI", "desc": "Picture and sound handed to one model with two towers. On visual voxels this scores BELOW video alone: the sound features dilute the fit rather than adding to it. We report it because it is what happened."},
+    {"type": "video + audio + text", "score": "0.213", "scored_with": "CLIP + Wav2Vec2 + MiniLM", "scale": "raw correlation, not ceiling-divided", "cortex": "cortex_videoaudiotext.png", "example": "a movie scene with dialogue + subtitles", "benchmark": "Algonauts2025-friends-sub01, all three towers", "desc": "The full movie experience: picture, sound, and dialogue. Here combining does help, unlike the pairing above — but only once each sense gets its own weighting."},
+    {"type": "a live loop", "score": "1.00", "scored_with": "Gemma-4-12B (step-by-step)", "scale": "win rate (random-move floor 0.20)", "cortex": null, "example": "one frame of a game board, then whatever the model's move produces next", "benchmark": "GridGame-reach-5x5 — closed-loop, one tick at a time", "desc": "The only entry here that genuinely streams. The model sees a frame, picks a move, the world updates, and the next frame depends on what it just did — so the input cannot be prepared in advance the way a fixed set of clips can. Frames go in and actions come back over the same hand-off, tick after tick, for as long as the episode lasts."}, {"type": "hours of continuous viewing", "score": "0.213", "scored_with": "CLIP + Wav2Vec2 + MiniLM", "scale": "raw correlation, not ceiling-divided", "cortex": "cortex_videoaudiotext.png", "example": "six seasons of a TV show plus several films, sampled at the brain's own rate", "benchmark": "Algonauts2025-friends-sub01 — 162,671 brain snapshots", "desc": "Not a clip at a time: many hours of episodes and films, each sampled once per brain snapshot (one every 1.49 s), so what is scored is a time course rather than a handful of separate clips. The model answers per snapshot. The frames are handed over as one large set, not fed in live — the benchmark is time-resolved, but it is not yet a real-time stream."}
   ],
   "witness": {
     "title": "Looking over the model's shoulder",
@@ -443,7 +451,7 @@ window.BSU_DATA = {
   },
   "percept": {
     "title": "What the model ACTUALLY saw",
-    "subtitle": "The image we hand a model isn't quite the image it sees. Before it reaches the model, every picture gets shrunk, cropped to a square, and colour-adjusted. This tool catches the picture at that final moment, right as it enters the model, and shows it back to us. The reveal: the cropping can quietly cut away parts of the image, so 'what we showed' and 'what the model saw' aren't the same.",
+    "subtitle": "The image we hand a model isn't quite the image it sees. Before it reaches the model, every picture gets shrunk, cropped to a square, and colour-adjusted. This tool catches the picture at that final moment, right as it enters the model, and shows it back to us. The cropping can quietly cut away parts of the image, so 'what we showed' and 'what the model saw' are not the same.",
     "tabs": [
       {
         "id": "crop",
@@ -454,7 +462,7 @@ window.BSU_DATA = {
           {"label": "Tall 360×640", "presented": "assets/percept/1_presented.png", "tensor": "assets/percept/1_tensor.png", "percept": "assets/percept/1_percept.png", "note": "Now it's the top and bottom that get cut and the left/right edges that survive: the crop flips depending on the picture's shape."},
           {"label": "Square 360×360", "presented": "assets/percept/2_presented.png", "tensor": "assets/percept/2_tensor.png", "percept": "assets/percept/2_percept.png", "note": "A square picture needs no cropping; all four edges survive, only the shrink happens. The colours come back faithfully once we undo the colour-adjustment."}
         ],
-        "reading": "Left = the picture we handed in. Middle = the colour-adjusted form the model actually works in, false-coloured and not meant for human eyes, which is exactly why we have to reconstruct it. Right = our reconstruction, undoing the colour-adjustment. The thing to notice is the difference between left and right: the crop genuinely removes pieces of the picture (the labelled edges), so 'what we showed' and 'what the model saw' are not the same image.",
+        "reading": "Left = the picture we handed in. Middle = the colour-adjusted form the model actually works in, false-coloured and not meant for human eyes, which is exactly why we have to reconstruct it. Right = our reconstruction, undoing the colour-adjustment. Compare left and right: the crop genuinely removes pieces of the picture (the labelled edges), so 'what we showed' and 'what the model saw' are not the same image.",
         "caveat": "This panel uses CLIP's exact shrink-and-crop recipe; that's a property of the preparation step, not the model's intelligence, so no actual model weights are needed to demonstrate it. The tool captures this same picture on a real model; it shows the input going in, not the model's internal thoughts afterward."
       },
       {
@@ -483,7 +491,7 @@ window.BSU_DATA = {
   },
   "rajalingham": {
     "title": "An object-recognition task (Rajalingham 2018), asked of models several ways",
-    "subtitle": "This is the Rajalingham 2018 object-matching benchmark: you're shown a target object for a moment, then two pictures, and you pick the one that matches. We have models do it the real way, actually looking and choosing, exactly as the people and monkeys in the original study did. The score (called i2n) isn't just 'how often right'; it's whether the model finds the SAME pictures hard that people find hard. So a model can be accurate overall yet still score low if it stumbles on different images than humans do. The bar colours mark how we asked: direct = answer right away; think-out-loud = reason step by step first; with-practice = show four solved examples before asking. (Even a flawless single chooser tops out around 0.33 on this score, so every bar here sits well below that ceiling.)",
+    "subtitle": "The models on the chart are CLIP ViT-B/32, scored from its internal features, plus Qwen2.5-VL at 3B and 7B and Gemma-4-12B, which are asked the question in words and answer in words. These scores sit below the public leaderboard for this benchmark, for two separate reasons. First, they are not on the same scale: the published 0.30 to 0.50 band is divided by a human-agreement ceiling, while every number on this page is the undivided raw value, so the two cannot be compared directly at all. Second, they are not the same measurement: the leaderboard number comes from fitting a small decision-rule on a model's internal features, while every bar here except CLIP comes from putting the question to the model and taking its answer, which is a harder thing to ask of it. Two further reasons the numbers are floors: a model that gives one answer per picture cannot pass about 0.33 on this score no matter how good it is, and our pictures are messier renders than the clean images the original people and monkeys saw. So the comparisons to trust are between the bars, not against the leaderboard. The task itself: you're shown a target object for a moment, then two pictures, and you pick the one that matches. We have models do it the real way, actually looking and choosing, exactly as the people and monkeys in the original study did. The score (called i2n) isn't just 'how often right'; it's whether the model finds the SAME pictures hard that people find hard. So a model can be accurate overall yet still score low if it stumbles on different images than humans do. The bar colours mark how we asked: direct = answer right away; think-out-loud = reason step by step first; with-practice = show four solved examples before asking.",
     "metric": "i2n raw (image-level, vs the human pool)",
     "binary_ceiling": 0.33,
     "readout_band": "~0.30-0.50",
@@ -502,12 +510,12 @@ window.BSU_DATA = {
     "montages": ["assets/raj2afc_montage_0.png", "assets/raj2afc_montage_2.png"],
     "kindColors": {"null": "#9aa0a6", "feature": "#1f9d57", "cot": "#d8483b", "direct": "#2f6bff", "fewshot": "#c6810f"},
     "findings": [
-      "How you ask is everything. Answering directly beats chain-of-thought here, and not by a little: making the medium model reason step by step roughly halves its score (0.16 → 0.03) and makes it blurt 'LEFT' almost every time. That's the OPPOSITE of the video game, where chain-of-thought was essential. Reasoning helps when there's a plan to work out, but it gets in the way of just seeing. (We confirmed this by re-running with the choices flipped left/right: the direct version genuinely perceives, the think-out-loud version is basically guessing once you account for its left-leaning habit.)",
+      "How you ask is everything. Answering directly beats chain-of-thought here, and not by a little: making the medium model reason step by step roughly halves its score (0.16 → 0.03) and makes it blurt 'LEFT' almost every time. That is the opposite of the video game, where chain-of-thought was essential. Reasoning helps when there's a plan to work out, but it gets in the way of just seeing. (We confirmed this by re-running with the choices flipped left/right: the direct version genuinely perceives, the think-out-loud version is basically guessing once you account for its left-leaning habit.)",
       "Bigger models see better. Answering directly, the small model is weak and biased; the medium and large ones are unbiased and genuinely good. A capable model can do this task cold, with no practice.",
       "Practice HURTS here, the opposite of what you'd expect for people. Showing four solved examples first dropped the small model to pure guessing and pulled the large one down too. This visual matching task doesn't benefit from worked examples the way text tasks do.",
-      "The approach that wins is the old one: training a small dedicated decision-rule on the model's features (0.30–0.50) still beats the best 'just ask it' result (0.16). A purpose-built rule beats prompting; closing that gap by prompting alone would take actually retraining the model, not a few examples."
+      "The approach that wins is probably still the old one: training a small dedicated decision-rule on the model's features. We cannot put a number on the size of that win from this page, because the published readout range is ceiling-divided and our 0.16 is not. A purpose-built rule beats prompting; closing that gap by prompting alone would take actually retraining the model, not a few examples."
     ],
-    "reading": "The same task, scored the same way, along three independent dials: model size (small → medium → large), how we ask (think-out-loud vs. answer directly), and how much help we give (none → a few examples → a trained decision-rule). The dashed lines mark the best a single chooser can reach (0.33) and the trained-rule range. We caught a left/right answering bias by tracking how often each model said 'left', and removed it with a balanced re-run.",
+    "reading": "The same task, scored the same way, along three independent dials: model size (small → medium → large), how we ask (think-out-loud vs. answer directly), and how much help we give (none → a few examples → a trained decision-rule). A model that gives one answer per picture cannot pass about 0.33 on this score, so read every bar against that limit. We caught a left/right answering bias by tracking how often each model said 'left', and removed it with a balanced re-run.",
     "caveats": [
       "The big caveat: the original people and monkeys chose between clean, canonical object pictures; our choices are messier, harder renders of the same objects. So the models are doing a HARDER version than the humans we compare them to: a low score mixes 'couldn't see it' with 'was given a tougher picture'. The absolute numbers are floors; the comparisons WITHIN this page (direct vs. think-out-loud, size, practice) all use the same pictures and are the trustworthy part.",
       "The trained-rule range (0.30–0.50) is the original benchmark's published number, not re-measured on this small image set; it anchors the scale but isn't a strict apples-to-apples comparison.",
@@ -535,13 +543,13 @@ window.BSU_DATA = {
   },
   "gemma_scorecard": {
     "title": "One brand-new model, put through every test",
-    "subtitle": "Gemma-4-12B is a free, open model released just this week, with an unusual design (no separate 'vision' part, it reads pixels directly). We wired it in once and ran it through everything: the object-matching task, the word task, the video game, and predicting brain activity, all from a single setup, on one ordinary GPU. The point isn't where it lands on a leaderboard; it's that one new model touched every kind of test the same way.",
+    "subtitle": "Gemma-4-12B is a free, open model released just this week, with an unusual design (no separate 'vision' part, it reads pixels directly). We wired it in once and ran it through everything: the object-matching task, the word task, the video game, and predicting brain activity, all from a single setup, on one ordinary GPU. What it shows is coverage rather than ranking: one new model touched every kind of test the same way.",
     "rows": [
-      {"capability": "Seeing · behavior", "benchmark": "Object matching", "metric": "human–model consistency (i2n)", "score": "0.146", "status": "done", "note": "answering directly, no left/right bias; on par with the medium Qwen model"},
+      {"capability": "Seeing · behavior", "benchmark": "Object matching", "metric": "raw human–model consistency (i2n)", "score": "0.146", "status": "done", "note": "answering directly, no left/right bias; on par with the medium Qwen model"},
       {"capability": "Reading · behavior", "benchmark": "Real vs. fake words", "metric": "accuracy", "score": "0.86", "status": "done", "note": "above the human average; not dyslexic, gets fake words right every time, real words 72%"},
       {"capability": "Playing · video game", "benchmark": "Grid game", "metric": "win rate", "score": "1.00", "status": "done", "note": "won all 15 games perfectly with chain-of-thought, topping the size ladder. On a much harder maze game it scores 0; the two games aren't interchangeable."},
-      {"capability": "Seeing · brain", "benchmark": "Predicting vision areas", "metric": "Brain-Score", "score": "V4 0.40 · IT 0.53", "status": "done", "note": "its unusual no-separate-vision design needed a new connector, built and checked this session; the 0.53 is in CLIP's league (measured a bit differently from the public leaderboard, so not a direct comparison)"}
+      {"capability": "Seeing · brain", "benchmark": "Predicting vision areas", "metric": "raw correlation (not ceiling-normalized)", "score": "V4 0.40 · IT 0.53", "status": "done", "note": "its unusual no-separate-vision design needed a new connector, built and checked this session; the 0.53 is in CLIP's league when both are measured our way; the public leaderboard divides by a noise ceiling and ours does not, so it is not comparable to a leaderboard number at all"}
     ],
-    "reading": "Because Gemma-4 has no separate vision part (pixels feed straight into the main model) predicting brain activity from it needed a new little connector, which we built and checked this session. After that, all four kinds of test ran from the one setup: the object-matching task, the word task, the video game (a clean sweep, topping the size ladder), and predicting vision-area brain activity (0.40 and 0.53). This scorecard is the whole promise in one picture: wire a model in once, test it on everything, even a model design that's only days old."
+    "reading": "Because Gemma-4 has no separate vision part (pixels feed straight into the main model) predicting brain activity from it needed a new little connector, which we built and checked this session. After that, all four kinds of test ran from the one setup: the object-matching task, the word task, the video game (a clean sweep, topping the size ladder), and predicting vision-area brain activity (0.40 and 0.53). Wire a model in once, test it on everything, even a model design that is only days old."
   }
 };

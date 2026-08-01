@@ -118,7 +118,6 @@
     b.onclick = () => selectInput(i, b);
     toggles.appendChild(b);
   });
-  function slug(t){ return t.replace(/[^a-z]/gi, '').toLowerCase(); }
   function selectInput(i, btn) {
     document.querySelectorAll('.tog').forEach(t => t.classList.remove('active'));
     btn.classList.add('active');
@@ -127,10 +126,32 @@
     $('resp-desc').textContent = inp.desc;
     $('resp-bench').textContent = inp.benchmark;
     $('resp-example').textContent = inp.example;
+    // score + the scale it is on, per row -- the scales genuinely differ, so each row
+    // states its own rather than implying a shared column.
+    if ($('resp-score')) $('resp-score').textContent =
+      inp.score ? `${inp.score} — ${inp.scored_with}` : '—';
+    if ($('resp-scale')) $('resp-scale').textContent = inp.scale || '—';
+    // The cortex picture is DECLARED per input, not inferred from the label. Inferring
+    // it meant an unmatched label silently fell back to a generic brain -- two different
+    // inputs showing the same map. `cortex: null` means there is no brain map for this
+    // input (the game is scored on win rate, not on predicting anything), and the figure
+    // is hidden rather than filled with a stand-in.
     const img = $('cortex-img');
-    const candidate = 'assets/cortex_' + slug(inp.type) + '.png?v=' + (window.ASSET_V || '3');
-    img.onerror = () => { img.onerror = null; img.src = 'assets/cortex_demo.png?v=' + (window.ASSET_V || '3'); };
-    img.src = candidate;
+    const figure = img && img.closest('figure');
+    if (inp.cortex) {
+      img.src = 'assets/' + inp.cortex + '?v=' + (window.ASSET_V || '3');
+      if (figure) figure.style.display = '';
+      // A measured map and a schematic make DIFFERENT claims, so they must not wear
+      // the same badge: one is a result, the other is anatomy.
+      const badge = figure && figure.querySelector('.illus-badge');
+      if (badge) badge.textContent = inp.cortex_measured ? 'measured' : 'illustrative';
+      const cap = $('cortex-cap');
+      if (cap) cap.textContent = inp.cortex_measured
+        ? `Measured, not a schematic: each vertex is coloured by how well ${inp.scored_with} predicted that spot in the brain (per-voxel correlation). Grey means the benchmark did not score there.`
+        : 'A schematic of where this kind of input drives activity, not a result. Inputs scored on behavior rather than on predicting the brain show no map at all.';
+    } else if (figure) {
+      figure.style.display = 'none';
+    }
   }
   selectInput(0, document.querySelector('.tog'));
 
@@ -149,8 +170,9 @@
     });
     const heat = {
       z: z, y: lc.labels, x: Array.from({ length: maxlen }, (_, i) => i),
-      type: 'heatmap', colorscale: 'Turbo', colorbar: { title: 'brain-<br>match', thickness: 12 },
-      hovertemplate: '%{y}, layer %{x}: %{z:.2f}<extra></extra>',
+      type: 'heatmap', colorscale: 'Turbo',
+      colorbar: { title: 'brain match,<br>share of this<br>model\'s best<br>layer (1.0 = its<br>own peak)', thickness: 12, titlefont: { size: 10 } },
+      hovertemplate: '%{y}, layer %{x}: %{z:.2f} of this model\'s best layer<extra></extra>',
     };
     const lay = Object.assign({}, LAYOUT, {
       margin: { l: 110, r: 24, t: 12, b: 50 },
@@ -208,7 +230,7 @@
       legend: { orientation: 'h', x: 0, y: 1.12, font: { size: 10 }, bgcolor: 'rgba(0,0,0,0)' },
       yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'real-vs-fake-word accuracy', range: [0.42, 1.08] }),
       xaxis: Object.assign({}, LAYOUT.xaxis, { categoryorder: 'array', categoryarray: ap.models,
-        title: 'model  (worst → best)' }),
+        title: 'model' }),
       shapes: [
         { type: 'line', x0: -0.5, x1: ap.models.length - 0.5, y0: ap.chance, y1: ap.chance,
           line: { color: '#888', width: 1, dash: 'dot' } },
@@ -272,8 +294,8 @@
       line: { color: '#d8483b', width: 1.6, dash: 'dash' }, hoverinfo: 'skip',
     };
     const lay = Object.assign({}, LAYOUT, {
-      yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'score', rangemode: 'tozero' }),
-      xaxis: Object.assign({}, LAYOUT.xaxis, { title: 'model  (worse → better)' }),
+      yaxis: Object.assign({}, LAYOUT.yaxis, { title: s.metric || 'score', rangemode: 'tozero' }),
+      xaxis: Object.assign({}, LAYOUT.xaxis, { title: 'model' }),
       annotations: [{ x: s.models.length - 1, y: s.null_floor, xanchor: 'right',
         yanchor: 'bottom', text: 'null baseline', showarrow: false,
         font: { color: '#d8483b', size: 11 } }],
@@ -346,6 +368,39 @@
         text: 'dyslexia threshold (0.65)', showarrow: false, font: { color: '#e0a13b', size: 10 } }],
     });
     Plotly.react('ablation-plot', [vwf, rnd], lay, CFG);
+
+    // HEADLINE: the dissociation, not the dose-response curve. Dyslexia is defined as
+    // reading below expectation GIVEN general ability, so the plot that carries the
+    // claim is reading-vs-a-non-reading-control, at the operating point (the largest
+    // ablation). vwf_control/random_control were in data.js but were never drawn.
+    if (a.vwf_control && a.random_control && $('ablation-dissoc-plot')) {
+      const last = a.mask_pct.length - 1;
+      const readingBars = {
+        x: ['reading (real vs fake words)', 'a non-reading control task'],
+        y: [a.vwf_roar[last], a.vwf_control[last]], type: 'bar', name: 'word-selective units off',
+        marker: { color: '#d8483b' },
+        hovertemplate: '%{x}: %{y:.2f}<extra>word-selective units off</extra>',
+      };
+      const baselineBars = {
+        x: ['reading (real vs fake words)', 'a non-reading control task'],
+        y: [a.vwf_roar[0], a.vwf_control[0]], type: 'bar', name: 'nothing switched off',
+        marker: { color: '#9aa0a6' },
+        hovertemplate: '%{x}: %{y:.2f}<extra>baseline</extra>',
+      };
+      const dlay = Object.assign({}, LAYOUT, {
+        barmode: 'group', showlegend: true,
+        legend: { x: 0.02, y: 1.12, orientation: 'h', font: { size: 10 }, bgcolor: 'rgba(0,0,0,0)' },
+        margin: { l: 56, r: 24, t: 40, b: 60 },
+        yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'accuracy', range: [0, 1.05] }),
+        xaxis: Object.assign({}, LAYOUT.xaxis, { title: '' }),
+        shapes: [{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: a.threshold, y1: a.threshold,
+          line: { color: '#e0a13b', width: 1.5, dash: 'dash' } }],
+        annotations: [{ xref: 'paper', x: 0.98, y: a.threshold, yanchor: 'bottom', xanchor: 'right',
+          text: 'dyslexia threshold (0.65)', showarrow: false, font: { color: '#e0a13b', size: 10 } }],
+      });
+      Plotly.react('ablation-dissoc-plot', [baselineBars, readingBars], dlay, CFG);
+      if (a.dissociation_note) $('ablation-dissoc-note').textContent = a.dissociation_note;
+    }
     if (a.protocol && document.getElementById('ablation-protocol'))
       $('ablation-protocol').textContent = a.protocol;
     setReading('ablation-reading', a.reading);
@@ -412,7 +467,7 @@
       line: { width: 3 } }, hovertemplate: 'previous default: layer %{x} r=%{y:.3f}<extra></extra>' };
     const sweepLay = Object.assign({}, LAYOUT, {
       margin: { l: 52, r: 16, t: 28, b: 46 },
-      yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'Brain-Score', rangemode: 'tozero' }),
+      yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'raw correlation (not ceiling-normalized)', rangemode: 'tozero' }),
       xaxis: Object.assign({}, LAYOUT.xaxis, { title: 'layer (input → output)', dtick: 4 }),
       annotations: [
         { x: lm.best_layer, y: lm.per_layer_r[lm.best_layer], yanchor: 'bottom', xanchor: 'center',
@@ -478,7 +533,7 @@
     const st = lm.strategies_table || [];
     const t = $('lm-appr-table');
     if (t) t.innerHTML = '<tr><th>way of reading the model</th><th># neurons</th>'
-      + '<th>Brain-Score</th></tr>' +
+      + '<th>ceiling-normalized score</th></tr>' +
       st.map(s => `<tr><td>${s.name}${s.best ? ' &nbsp;<b style="color:var(--good)">← best</b>' : ''}</td>`
         + `<td>${s.features.toLocaleString()}</td>`
         + `<td${s.best ? ' style="color:var(--good);font-weight:600"' : ''}>${s.score.toFixed(3)}</td></tr>`).join('');
@@ -580,7 +635,7 @@
     };
     const inLay = Object.assign({}, LAYOUT, {
       margin: { l: 48, r: 12, t: 10, b: 52 },
-      yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'brain-prediction score', range: [0, 0.36] }),
+      yaxis: Object.assign({}, LAYOUT.yaxis, { title: "challenge score (the organizers' own metric)", range: [0, 0.36] }),
       xaxis: Object.assign({}, LAYOUT.xaxis, { tickfont: { size: 11 } }),
     });
     Plotly.react('lb-indist-plot', [inBar], inLay, CFG);
@@ -595,7 +650,7 @@
     };
     const oodLay = Object.assign({}, LAYOUT, {
       margin: { l: 48, r: 12, t: 10, b: 100 },
-      yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'brain-prediction score', range: [0, 0.26] }),
+      yaxis: Object.assign({}, LAYOUT.yaxis, { title: "challenge score (the organizers' own metric)", range: [0, 0.26] }),
       xaxis: Object.assign({}, LAYOUT.xaxis, { tickangle: -30, tickfont: { size: 9.5 } }),
       shapes: [{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: lb.ood_avg, y1: lb.ood_avg,
         line: { color: '#7c4dff', width: 1.5, dash: 'dash' } }],
@@ -624,13 +679,13 @@
     const ys = fc.bars.map(b => b.r);
     const lay = Object.assign({}, LAYOUT, {
       margin: { l: 48, r: 12, t: 16, b: 84 },
-      yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'Brain-Score',
+      yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'raw correlation (not ceiling-normalized)',
         range: [Math.max(0, Math.min.apply(null, ys) - 0.04), Math.max.apply(null, ys) + 0.04] }),
       xaxis: Object.assign({}, LAYOUT.xaxis, { tickangle: -18, tickfont: { size: 10 } }),
     });
     Plotly.react('fusion-plot', [bar], lay, CFG);
     const tb = $('fusion-table');
-    if (tb) tb.innerHTML = '<tr><th>where the features come from</th><th>how the senses combine</th><th># features</th><th>Brain-Score</th><th>time to run (min)</th></tr>' +
+    if (tb) tb.innerHTML = '<tr><th>where the features come from</th><th>how the senses combine</th><th># features</th><th>raw correlation</th><th>time to run (min)</th></tr>' +
       fc.bars.map(b => `<tr><td>${b.name}</td>`
         + `<td><span class="path-chip" style="background:${kindColor[b.kind] || '#9aa0a6'}">${b.fusion || b.kind}</span></td>`
         + `<td>${b.dim != null ? b.dim.toLocaleString() : '—'}</td><td>${b.r.toFixed(3)}</td>`
@@ -653,7 +708,7 @@
         hovertemplate: 'fusion ON (peak layer %{x}): r=%{y:.3f}<extra></extra>' };
       const lay = Object.assign({}, LAYOUT, {
         margin: { l: 48, r: 14, t: 26, b: 44 },
-        yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'Brain-Score', rangemode: 'tozero' }),
+        yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'raw correlation (not ceiling-normalized)', rangemode: 'tozero' }),
         xaxis: Object.assign({}, LAYOUT.xaxis, { title: 'depth inside the native multimodal model (0 = before the senses mix)', dtick: 8 }),
         annotations: [
           { x: 0, y: wq.r[wq.layers.indexOf(0)], yanchor: 'top', yshift: -8, text: 'fusion off', showarrow: false, font: { color: '#777', size: 10 } },
@@ -675,7 +730,7 @@
       hovertemplate: 'delay %{x} TRs: r=%{y:.3f}<extra></extra>',
     };
     const lay = Object.assign({}, LAYOUT, {
-      yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'Brain-Score', rangemode: 'tozero' }),
+      yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'raw correlation (not ceiling-normalized)', rangemode: 'tozero' }),
       // linear axis so the delays sit at their true spacing and span the full width
       xaxis: Object.assign({}, LAYOUT.xaxis, { title: 'how far we nudge the AI in time vs. the brain (scans; 1 scan ≈ 1.5 s)',
         type: 'linear', nticks: 9 }),
@@ -726,7 +781,7 @@
         const pct = Math.max(0, Math.min(100, (r / 0.5) * 100));   // bar scaled to r∈[0,0.5]
         rEl.innerHTML =
           `<div class="mb-rnow-lab">how well the two brains match, right now ` +
-          `<span class="mb-rnow-sub">(0 = chance, ~0.4 = today's ceiling)</span></div>` +
+          `<span class="mb-rnow-sub">(raw correlation; 0 = chance)</span></div>` +
           `<div class="mb-rnow-bar"><span style="width:${pct}%"></span></div>` +
           `<div class="mb-rnow-val">match = ${r.toFixed(2)}` +
           (active.mean_r ? ` <span class="mb-rnow-sub">· whole-clip average ${active.mean_r.toFixed(2)}</span>` : '') +
@@ -744,8 +799,7 @@
       }], {
         margin: { l: 34, r: 8, t: 6, b: 30 },
         xaxis: { title: { text: 'snapshot through the clip (~1.5s apart)', font: { size: 10 } }, tickfont: { size: 9 }, fixedrange: true },
-        yaxis: { range: [-0.1, 0.45], tickfont: { size: 9 }, zeroline: true, fixedrange: true },
-        shapes: [{ type: 'line', x0: 0.5, x1: xs.length + 0.5, y0: 0.05, y1: 0.05, line: { color: '#9aa0a6', dash: 'dot', width: 1 } }]
+        yaxis: { range: [-0.1, 0.45], tickfont: { size: 9 }, zeroline: true, fixedrange: true, title: { text: 'raw correlation', font: { size: 10 } } },
       }, CFG);
     }
     // render tab selector
@@ -890,12 +944,12 @@
       // auto-ticks. The 0.33 binary-chooser ceiling lives in the caption instead
       // of a plot line. Drawing it forced the axis out to 0.33 and squeezed the
       // bars into the left third.
-      xaxis: Object.assign({}, LAYOUT.xaxis, { title: 'human–model consistency (i2n) (how human-like the pattern of mistakes is)',
+      xaxis: Object.assign({}, LAYOUT.xaxis, { title: 'raw human–model consistency (i2n, not ceiling-divided)',
         type: 'linear', nticks: 8, tickformat: '.2f', zeroline: true, zerolinecolor: '#c2cadb' }),
     });
     Plotly.react('raj-plot', [bar], lay, CFG);
     $('raj-table').innerHTML =
-      '<tr><th>model</th><th>how asked</th><th>accuracy</th><th>% chose left</th><th>match-to-human</th></tr>' +
+      '<tr><th>model</th><th>how asked</th><th>accuracy</th><th>% chose left</th><th>match-to-human (raw i2n)</th></tr>' +
       raj.rows.map(r => `<tr><td>${r.model}</td>`
         + `<td><span class="path-chip" style="background:${raj.kindColors[r.kind] || '#888'}">${r.mode}</span></td>`
         + `<td>${r.acc.toFixed(3)}</td><td>${r.frac_left == null ? '—' : r.frac_left.toFixed(2)}</td>`
@@ -944,7 +998,7 @@
       const lay = Object.assign({}, LAYOUT, {
         height: 300, margin: { l: 230, r: 28, t: 14, b: 40 }, showlegend: false,
         yaxis: Object.assign({}, LAYOUT.yaxis, { automargin: true }),
-        xaxis: Object.assign({}, LAYOUT.xaxis, { title: 'human–model consistency (i2n)',
+        xaxis: Object.assign({}, LAYOUT.xaxis, { title: 'raw human–model consistency (i2n, not ceiling-divided)',
           type: 'linear', nticks: 7, tickformat: '.2f', zeroline: true, zerolinecolor: '#c2cadb' }),
       });
       Plotly.react('raj-seq-plot', [bar], lay, CFG);
