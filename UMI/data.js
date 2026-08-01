@@ -63,11 +63,11 @@ window.BSU_DATA = {
     },
     "behavior_roar": {
       "capability": "Behavior: real vs. fake words (ROAR / Yeatman 2021)",
-      "metric": "accuracy (chance = 0.50)",
+      "metric": "Brain-Score (share of the human ceiling)",
       "models": ["chance", "random-vit", "CLIP-B32", "BLIP-2", "GPT-2", "Qwen-3B"],
-      "scores": [0.500, 0.540, 0.680, 0.790, 0.810, 0.930],
-      "null_floor": 0.540,
-      "reading": "Can each model tell real words from fake ones, the task used to screen for dyslexia? Pure guessing scores 0.50; an untrained model barely beats it (0.54). GPT-2, a text-only model that never sees images, reaches 0.81, matching humans, which tells us this task is really about knowing letter patterns, not about vision. Qwen, which answers by writing out its choice, scores highest (0.93)."
+      "scores": [0.617, 0.666, 0.838, 0.974, 0.999, 1.147],
+      "null_floor": 0.666,
+      "reading": "Can each model tell real words from fake ones, the task used to screen for dyslexia? These are scored the way the benchmark reports them: as a share of the human ceiling, so 1.0 means matching the average person. Pure guessing lands at 0.62 and an untrained model barely beats it (0.67). GPT-2, a text-only model that never sees images, reaches 1.00 \u2014 dead level with humans \u2014 which tells us this task is really about knowing letter patterns, not about vision. Qwen, which answers by writing out its choice, goes past the line at 1.15: above 1.0 simply means it beat the average human, not that anything is broken."
     },
     "embodied_game": {
       "capability": "Playing: grid video game",
@@ -394,26 +394,26 @@ window.BSU_DATA = {
   "all_paths": {
     "title": "The same word task, scored through every way a model can answer",
     "subtitle": "Telling real words from fake ones (the dyslexia-screening task). A model can answer in different ways (by reading its internal features, by writing out an answer, or both) and the same single setup tries whichever ways each model supports.",
-    "chance": 0.5,
-    "null_floor": 0.54,
+    "chance": 0.617,
+    "null_floor": 0.666,
     "pathColors": {"readout": "#3b7dd8", "generation": "#e0a13b", "instr-readout": "#7c5bff"},
     "models": ["chance", "random-ViT", "CLIP", "GPT-2", "BLIP-2", "Qwen"],
     "rows": [
-      {"model": "CLIP", "input": "image", "path": "readout", "score": 0.680},
-      {"model": "BLIP-2", "input": "image", "path": "readout", "score": 0.790},
-      {"model": "BLIP-2", "input": "image", "path": "generation", "score": 0.500},
-      {"model": "BLIP-2", "input": "text", "path": "generation", "score": 0.480},
-      {"model": "BLIP-2", "input": "image + instruct", "path": "instr-readout", "score": 0.920},
-      {"model": "Qwen", "input": "image", "path": "readout", "score": 0.740},
-      {"model": "Qwen", "input": "image", "path": "generation", "score": 0.930},
-      {"model": "Qwen", "input": "text", "path": "generation", "score": 0.940},
-      {"model": "Qwen", "input": "image + instruct", "path": "instr-readout", "score": 0.980},
-      {"model": "GPT-2", "input": "text", "path": "readout", "score": 0.810},
-      {"model": "GPT-2", "input": "text", "path": "generation", "score": 0.850},
-      {"model": "random-ViT", "input": "image", "path": "readout", "score": 0.540},
-      {"model": "chance", "input": "—", "path": "readout", "score": 0.500}
+      {"model": "CLIP", "input": "image", "path": "readout", "score": 0.838},
+      {"model": "BLIP-2", "input": "image", "path": "readout", "score": 0.974},
+      {"model": "BLIP-2", "input": "image", "path": "generation", "score": 0.617},
+      {"model": "BLIP-2", "input": "text", "path": "generation", "score": 0.592},
+      {"model": "BLIP-2", "input": "image + instruct", "path": "instr-readout", "score": 1.134},
+      {"model": "Qwen", "input": "image", "path": "readout", "score": 0.912},
+      {"model": "Qwen", "input": "image", "path": "generation", "score": 1.147},
+      {"model": "Qwen", "input": "text", "path": "generation", "score": 1.159},
+      {"model": "Qwen", "input": "image + instruct", "path": "instr-readout", "score": 1.208},
+      {"model": "GPT-2", "input": "text", "path": "readout", "score": 0.999},
+      {"model": "GPT-2", "input": "text", "path": "generation", "score": 1.048},
+      {"model": "random-ViT", "input": "image", "path": "readout", "score": 0.666},
+      {"model": "chance", "input": "—", "path": "readout", "score": 0.617}
     ],
-    "reading": "How a model answers can matter as much as which model it is. Take Qwen, unchanged, asked three different ways: reading its raw visual features gets 0.74, writing out an answer gets 0.93, and reading its features after it has 'thought about' the question in words gets 0.98. The language side is where the reading really happens. BLIP-2 is revealing: asked to write an answer it falls to pure guessing (0.50, since it was never trained to follow instructions), yet the right answer is clearly sitting in its features (0.92); it just can't say it out loud. And GPT-2, which only ever sees text, does well both ways (0.81 and 0.85): it simply considers real words far more likely than fake ones. Colour marks how the model answered; the table breaks it down by what it was shown, how it answered, and the score."
+    "reading": "How a model answers can matter as much as which model it is. Take Qwen, unchanged, asked three different ways: reading its raw visual features gets 0.91, writing out an answer gets 1.15, and reading its features after it has 'thought about' the question in words gets 1.21 (these are shares of the human ceiling, so above 1.0 means beating the average person). The language side is where the reading really happens. BLIP-2 is revealing: asked to write an answer it falls to pure guessing (0.62, the ceiled value of chance, since it was never trained to follow instructions), yet the right answer is clearly sitting in its features (0.92); it just can't say it out loud. And GPT-2, which only ever sees text, does well both ways (1.00 and 1.05): it simply considers real words far more likely than fake ones. Colour marks how the model answered; the table breaks it down by what it was shown, how it answered, and the score."
   },
   "benchmark_mechanics": {
     "title": "What one of these tests actually does",
@@ -424,11 +424,11 @@ window.BSU_DATA = {
       {"name": "Writing an answer", "models": "Qwen, BLIP-2, instruction-following models", "how": "We show the image and literally ask 'is this a real word?', then read the model's written reply. This only works for models trained to follow instructions, and it's the path the original dyslexia study used."}
     ],
     "floors": [
-      {"label": "guessing", "value": 0.50},
-      {"label": "untrained model", "value": 0.54},
-      {"label": "CLIP", "value": 0.68}
+      {"label": "guessing", "value": 0.617},
+      {"label": "untrained model", "value": 0.666},
+      {"label": "CLIP", "value": 0.838}
     ],
-    "answer": "CLIP scores 0.68 by the first route, reading its features, even though it can't write an answer. Its caption-matching training left it sensitive to what real words look like. The honest way to read that 0.68 is against the floors: pure guessing is 0.50 and an untrained model is 0.54, so CLIP's score is +0.14 of genuine learned word-knowledge above what you'd get for free, not the scoring trick overfitting."
+    "answer": "CLIP reaches 0.84 of the human ceiling by the first route, reading its features, even though it can't write an answer. Its caption-matching training left it sensitive to what real words look like. The honest way to read that 0.84 is against the floors: pure guessing is 0.62 and an untrained model is 0.67, so CLIP's score is +0.17 of genuine learned word-knowledge above what you'd get for free, not the scoring trick overfitting."
   },
   "inputs": [
     {"type": "image", "score": "0.374", "scored_with": "CLIP ViT-B/32", "scale": "share of the noise ceiling (untrained floor 0.104)", "cortex": "cortex_image.png", "example": "a natural photograph", "benchmark": "MajajHong2015public.IT-pls — monkey inferior-temporal recordings", "desc": "A still photo. The model returns its response to each photo and we ask how much of the recorded IT response that predicts."},
