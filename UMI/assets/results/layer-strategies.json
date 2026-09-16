@@ -1,0 +1,53 @@
+{
+  "model": "vjepa2-vitl",
+  "benchmark": "Lahner2024-fMRI-naturalistic-visualROI",
+  "n_stimuli": 1026,
+  "n_voxels": 4042,
+  "metric": "Median per-voxel prediction correlation divided by sqrt(split-half reliability)",
+  "protocol": "Same localizer/test split (localizer fraction 0.5, seed 0); fitting and feature selection use the localizer. Score on held-out clips.",
+  "strategies": [
+    {
+      "id": "single",
+      "title": "All units from one layer",
+      "selection": "1,024 units \u00b7 layer 16",
+      "layers": [
+        "encoder.layer.16"
+      ],
+      "fit": "Ridge",
+      "fit_note": "Fit a prediction rule with limited weights.",
+      "score": 0.7765,
+      "source": "budget_curve_results.json:curve_normalized.whole_layer_r"
+    },
+    {
+      "id": "composite",
+      "title": "Selected units across layers",
+      "selection": "256 units \u00b7 pooled across 3 layers",
+      "layers": [
+        "encoder.layer.16",
+        "encoder.layer.15",
+        "encoder.layer.14"
+      ],
+      "fit": "Ridge",
+      "fit_note": "Fit the same type of prediction rule.",
+      "score": 0.7453,
+      "source": "budget_curve_results.json:curve_normalized.pooled_layers[k=256].r"
+    },
+    {
+      "id": "all",
+      "title": "All 24 layers + ridge",
+      "selection": "All units \u00b7 24 separate layer groups",
+      "fit": "Banded ridge",
+      "fit_note": "Fit a rule that also weights each layer group.",
+      "score": 0.7846,
+      "source": "banded_calibrate_results.json:banded_24_niter500"
+    }
+  ],
+  "limits": "Feature counts and fitting methods differ. This is a comparison of practical readout choices, not a feature-budget-matched test. No confidence intervals or statistical significance established for these three scores. The composite pools selected existing units; it does not create averaged units. Layer glyphs are schematic; scores are archived measurements.",
+  "sources_sha256": {
+    "unified/experiments/vjepa2_sweep/budget_curve_results.json": "2538cdf79d8c22dca17cd7018ea3c15585fbb9652eefadf808046b094d77b241",
+    "unified/experiments/vjepa2_sweep/banded_calibrate_results.json": "af9e793c5e143dca6fc0890e14cf2780c7094cb7c6b8a615a6f0cb66b7c407ef",
+    "unified/experiments/vjepa2_sweep/run_budget_curve.py": "79483e19468e3151731912d1c18efe2fe9047a224e2dd075c5b4a1993aa8d3a6",
+    "unified/experiments/vjepa2_sweep/run_banded_calibrate.py": "e237af306d4e7611af44ce7a851ca34fcd49041508436c048ab39b07ed0159b0"
+  },
+  "exporter_sha256": "6bc9654bb9e09bf2f89d0c9a9139a035c29224701ee8f2b5ba496b7e2ea20f7e"
+}

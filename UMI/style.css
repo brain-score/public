@@ -432,3 +432,34 @@ figcaption{color:var(--muted); font-size:.82rem; margin-top:8px}
 .cta-row{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
 .cta-btn{display:inline-block;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:7px 13px;font-size:.85rem;text-decoration:none;font-weight:600}
 .cta-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Overview reading paths. */
+[hidden]{display:none !important}
+body[data-aud="executive"] .technical-only,
+body[data-aud="executive"] .status-panel{display:none}
+.overview-start{display:flex;gap:20px;flex-wrap:wrap;margin-top:24px}
+.overview-start a{font-weight:650;color:var(--accent)}
+.analysis-details{margin:20px 0;padding:14px 18px;border:1px solid var(--line);border-radius:10px}
+.analysis-details summary{cursor:pointer;font-weight:600;color:var(--ink)}
+.analysis-details[open] summary{margin-bottom:14px}
+section{scroll-margin-top:85px}
+.aud-btn:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:760px){
+  .nav{position:relative;flex-wrap:wrap;gap:12px;padding:14px 18px}
+  .aud-bar{flex-wrap:wrap;gap:6px}
+  .hero-inner{padding:32px 18px}
+  .hero h1{font-size:2.25rem}
+  .section{padding:32px 18px}
+  .cap-grid{grid-template-columns:1fr}
+  .nulls-table,.paths-table{display:block;overflow-x:auto}
+}
+@media(max-width:760px){
+  body{padding-top:0}
+  .nav{height:auto;min-height:54px}
+  .hero-inner{padding:32px 18px;max-width:100%}
+  .two-col>*,.response-panel>*,.mb-grid>*,.mech-wrap>*{min-width:0}
+  table,.plot,.schematic,.code{max-width:100%}
+  .kv b{overflow-wrap:anywhere;min-width:0}
+  .game-fig img,.localizer-fig img{max-width:100%;height:auto}
+}
+@media(max-width:760px){#game-canvas{max-width:100%;height:auto}.play-wrap,.play-side{min-width:0}}

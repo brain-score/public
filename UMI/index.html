@@ -231,15 +231,17 @@
     .spine{flex-wrap:wrap;}
   }
 </style>
+<link rel="stylesheet" href="theme.css?v=20260916.1">
 </head>
-<body>
+<body class="landing-page">
 
-<nav class="site-nav">
-  <a class="site-brand" href="index.html">Brain-Score<span class="d">&middot;</span><span class="m">Unified</span></a>
-  <div class="site-links">
+<nav class="site-nav" aria-label="Main navigation">
+  <a class="brand" href="index.html">Brain-Score / UMI</a>
+  <div class="nav-actions">
+    <a href="index.html" aria-current="page">Home</a>
     <a href="overview.html">Overview</a>
     <a href="architecture.html">Architecture</a>
-    <a class="ext" href="https://www.brain-score.org" target="_blank" rel="noopener">Leaderboard &#8599;</a>
+
   </div>
 </nav>
 
@@ -247,12 +249,11 @@
 
   <header class="fade">
     <p class="eyebrow">Brain-Score &middot; Unified Model Interface</p>
-    <h1>UMI generalizes Brain-Score, backwards-compatible</h1>
-    <p class="lede">The Unified Model Interface (UMI) changes <strong>how a benchmark talks to a model</strong>.
-      It does not change the models, the data, the metrics, or the scores. Here is the difference,
-      without the vocabulary.</p>
+    <h1>One interface.<br>More ways to study AI.</h1>
+    <p class="lede">Connect a model to Brain-Score, then use it for brain comparisons, behavioral experiments, and tools that inspect or change its activity.</p>
+    <p class="diagram-note">UMI v2 is a development candidate. Compatibility checks and production qualification are ongoing.</p>
     <div class="cta-row">
-      <a class="btn btn-primary" href="overview.html">Read the overview &rarr;</a>
+      <a class="btn btn-primary" href="overview.html">Explore the results &rarr;</a>
       <a class="btn btn-ghost" href="architecture.html">See the architecture &rarr;</a>
     </div>
   </header>
@@ -261,6 +262,7 @@
 
   <section class="fade d1">
     <h2>How a benchmark evaluates a model</h2>
+    <p class="diagram-note">Interface diagram · arrows show the direction of a call or result.</p>
     <div class="panes">
 
       <!-- LEGACY -->
@@ -300,7 +302,7 @@
       <!-- UMI -->
       <div class="pane pane--umi">
         <div class="pane-head">
-          <span class="pane-tag"><span class="dot"></span>Now (Brain-Score 3.0)</span>
+          <span class="pane-tag"><span class="dot"></span>UMI v2 candidate</span>
           <div class="pane-title">One interface, every experiment</div>
         </div>
         <div class="pane-body">
@@ -349,7 +351,12 @@
     </div>
 
     <div class="smode is-stream" id="smode">
-      <div class="scope">
+      <div class="figure-key" aria-label="Event diagram legend">
+      <span><i class="key-swatch" style="--key-color:#285ee8"></i>Input to the model</span>
+      <span><i class="key-swatch" style="--key-color:#167b78"></i>Output from the model</span>
+      <span>Each mark represents an event; timing is schematic.</span>
+    </div>
+    <div class="scope">
         <div class="scope-side">
           <span class="only-stream">Input events streaming in</span>
           <span class="only-batch">The whole StimulusSet, handed over at once</span>
@@ -513,12 +520,13 @@
   <section class="fade" style="text-align:center">
     <h2 style="margin-bottom:16px">Go deeper</h2>
     <div class="cta-row" style="justify-content:center">
-      <a class="btn btn-primary" href="overview.html">Read the overview &rarr;</a>
+      <a class="btn btn-primary" href="overview.html">Explore the results &rarr;</a>
       <a class="btn btn-ghost" href="architecture.html">See the architecture &rarr;</a>
     </div>
   </section>
 
   <footer>
+    <p><a href="https://www.brain-score.org" target="_blank" rel="noopener">Brain-Score leaderboard</a></p>
     Today a benchmark reaches into a model through many domain-specific methods and gets
     one batch back; with UMI it opens a <code>session</code>, calls <code>interact</code> once, and events stream
     both ways over time. Same weights, same metrics, same scores; the only thing that changes is the interface itself.

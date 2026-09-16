@@ -1,69 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>UMI · A toolbox for studying AI</title>
-<meta name="description" content="Compare models with brain recordings, inspect and intervene during experiments, and connect robotics policies through UMI.">
-<link rel="stylesheet" href="style.css?v=20260916.1">
-<link rel="stylesheet" href="results.css?v=20260916.1">
-<link rel="stylesheet" href="catalog.css?v=20260916.1">
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
-<script src="figures.js?v=20260916.1" defer></script>
-<script src="data.js?v=20260916.1" defer></script>
-<script src="app.js?v=20260916.1" defer></script>
-<script src="model_moves.js?v=2" defer></script>
-<script src="game.js?v=2" defer></script>
-<script src="catalog.js?v=20260916.1" defer></script>
-<script src="executive.js?v=20260916.1" defer></script>
-<script src="results.js?v=20260916.1" defer></script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UMI · Experiment archive</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<link rel="stylesheet" href="style.css?v=20260916.1" />
 <link rel="stylesheet" href="theme.css?v=20260916.1">
-<link rel="stylesheet" href="executive.css?v=20260916.1">
 </head>
-<body data-aud="executive">
+<body class="archive-page" data-aud="executive">
 <nav class="site-nav" aria-label="Main navigation">
   <a class="brand" href="index.html">Brain-Score / UMI</a>
   <div class="nav-actions">
     <a href="index.html">Home</a>
-    <a href="overview.html" aria-current="page">Overview</a>
+    <a href="overview.html">Overview</a>
     <a href="architecture.html">Architecture</a>
-    <div class="view-switch" aria-label="Reading view">
-      <button data-aud-button="executive" aria-pressed="true">Executive</button>
-      <button data-aud-button="technical" aria-pressed="false">Technical</button>
-    </div>
+    <div class="view-switch" id="aud-bar"><button class="aud-btn" data-aud="executive">Executive</button><button class="aud-btn" data-aud="technical">Technical</button></div>
   </div>
 </nav>
+
+<aside class="toc" id="toc">
+  <div class="toc-head">On this page</div>
+  <div class="links" id="nav-links"></div>
+</aside>
+
 <header class="hero">
-  <span class="eyebrow">Unified Model Interface</span>
-  <h1>A toolbox for studying AI.</h1>
-  <p>Compare models with brains and behavior. Inspect how they work. Bring the same tools to robotics.</p>
-  <nav class="group-links" aria-label="Result groups">
-    <a href="#compare">01 / Brains &amp; behavior</a>
-    <a href="#inspect">02 / Inspect &amp; intervene</a>
-    <a href="#robotics-group">03 / Robotics</a>
-  </nav>
-  <p class="candidate">Working examples from UMI and its candidate integrations. Production qualification is ongoing.</p>
+  <div class="hero-inner">
+    <h1 id="hero-title">Study AI with the tools of neuroscience.</h1>
+    <p id="hero-sub" class="sub"></p>
+    <div class="pill-row technical-only">
+      <span class="pill">seeing</span><span class="pill">reading</span>
+      <span class="pill">hearing</span><span class="pill">video</span>
+      <span class="pill">mixed senses</span><span class="pill">lesioning</span>
+      <span class="pill">acting</span>
+    </div>
+    <pre class="code hero-code technical-only"><code id="hero-code-body" class="hero-swap"></code></pre>
+    <p id="hero-note" class="note"></p>
+    <p class="overview-start"><a href="#capabilities">Explore capabilities</a> <a href="#partners">Build an integration</a></p>
+  </div>
 </header>
-<main>
-<nav id="result-index" class="result-index" aria-label="All results"></nav>
-  <section id="builder" class="builder" hidden>
-    <h2>Build a model integration or a research tool</h2>
-    <p>Use <code>process(input)</code> for a call and <code>interact(session)</code> for an experiment loop. Attach observers and supported interventions through public APIs.</p>
-    <div class="builder-links"><a href="architecture.html">Interface and extension points</a><a href="RESULT_TEMPLATE.md">Add a result to this page</a></div>
-  </section>
-  <section id="compare" class="result-group">
-    <div class="group-heading"><span class="group-number">01</span><h2>Compare with brains and behavior</h2></div>
-    <div id="compare-results"></div>
-  </section>
-  <section id="inspect" class="result-group">
-    <div class="group-heading"><span class="group-number">02</span><h2>Inspect and intervene</h2></div>
-    <div id="inspect-results"></div>
-  </section>
-  <section id="robotics-group" class="result-group">
-    <div class="group-heading"><span class="group-number">03</span><h2>Robotics</h2></div>
-    <div id="robotics-group-results"></div>
-  </section>
-<div id="retained-sections">
+
 <section id="api" data-toc="The API" data-order="5" data-tier="api" class="section api-band">
   <p class="act-eyebrow">For builders · the contract</p>
   <h2>Build around a shared model interface</h2>
@@ -76,6 +52,7 @@
   <p class="muted small">The full contract, the channels, the wrappers, and the file
     layout: <a href="architecture.html">the Architecture page →</a></p>
 </section>
+
 <section id="capabilities" data-toc="Capabilities" data-order="10" data-tier="act1" class="section">
   <h2>What can you do with UMI?</h2>
   <p class="lead">Connect a model once, then use it in compatible benchmarks and experiments. Add tools as your research questions change.</p>
@@ -86,6 +63,7 @@
     <table class="nulls-table status-table" id="capability-status-table"></table>
   </div>
 </section>
+
 <section id="frontier" data-toc="What it opens up" data-order="15" data-tier="act1" class="section alt">
   <h2>Further research directions</h2>
   <p class="lead">These extensions need their own implementations and validation.</p>
@@ -109,6 +87,7 @@
         channels, so physiological measures sit beside the neural and behavioral ones.</p></div>
   </div>
 </section>
+
 <section id="response" data-toc="Brain response" data-order="20" data-tier="act1" class="section">
   <h2>Compare models with brain recordings</h2>
   <p class="lead">Explore examples using images, text, audio, and video. Each result names its benchmark and score scale; scores from different scales should not be compared.</p>
@@ -131,6 +110,7 @@
     </div>
   </div>
 </section>
+
 <section id="moviebrain" data-toc="Movie → brain" data-order="30" data-tier="act1" class="section alt">
   <h2 id="mb-title"></h2>
   <p class="lead" id="mb-sub"></p>
@@ -168,6 +148,7 @@
   <p class="reading" id="mb-reading"></p>
   <div class="raj-caveats" id="mb-caption"></div>
 </section>
+
 <section id="leaderboard" data-toc="External cross-check" data-order="185" data-tier="act2" class="section">
   <h2 id="lb-title"></h2>
   <p class="lead" id="lb-sub"></p>
@@ -186,6 +167,7 @@
   <p class="reading" id="lb-reading"></p>
   <div class="raj-caveats" id="lb-caption"></div>
 </section>
+
 <section id="rajalingham" data-toc="Object matching" data-order="40" data-tier="act1" class="section alt">
   <h2 id="raj-title"></h2>
   <p class="lead" id="raj-sub"></p>
@@ -208,6 +190,7 @@
   <div class="raj-caveats" id="raj-caveats"></div>
 
 </section>
+
 <section id="game" data-toc="Playing a game" data-order="50" data-tier="act1" class="section">
   <h2 id="game-title"></h2>
   <p class="lead" id="game-sub"></p>
@@ -250,6 +233,7 @@
     </div>
   </div>
 </section>
+
 <section id="selection" data-toc="Word-form units" data-order="110" data-tier="act2" class="section">
   <h2>Finding a model's word-selective units</h2>
   <p class="lead">To study reading, we first have to find the model's word-selective units.
@@ -273,6 +257,7 @@
     </div>
   </div>
 </section>
+
 <section id="tools" data-toc="The tools" data-order="120" data-tier="act2" class="section">
   <h2 id="tools-title"></h2>
   <p class="lead" id="tools-sub"></p>
@@ -363,6 +348,7 @@
     <p class="tool-caption" id="tools-lm-cap"></p>
   </div>
 </section>
+
 <section id="layermapping" data-toc="Layer mapping" data-order="130" data-tier="act2" class="section alt">
   <p class="tool-eyebrow-row"><span class="tool-eyebrow">Tool 2 · Layer mapping, in action</span></p>
   <h2 id="lm-title"></h2>
@@ -395,6 +381,7 @@
     </div>
   </div>
 </section>
+
 <section id="generalize" data-toc="Does it generalize?" data-order="108" data-tier="act2" class="section">
   <h2 id="gen-title"></h2>
   <p class="lead" id="gen-sub"></p>
@@ -412,6 +399,7 @@
   </div>
   <p class="reading" id="gen-reading"></p>
 </section>
+
 <section id="witness" data-toc="Watch it run" data-order="150" data-tier="act2" class="section alt">
   <p class="tool-eyebrow-row"><span class="tool-eyebrow">Tool 3 · Watch it run</span></p>
   <h2 id="witness-title"></h2>
@@ -420,6 +408,7 @@
   <div class="witness-grid" id="witness-grid"></div>
   <p class="reading" id="witness-reading"></p>
 </section>
+
 <section id="percept" data-toc="What it saw" data-order="160" data-tier="act2" class="section">
   <p class="tool-eyebrow-row"><span class="tool-eyebrow">Tool 4 · See what it saw</span></p>
   <h2 id="percept-title"></h2>
@@ -429,6 +418,7 @@
   <p class="reading" id="percept-reading"></p>
   <div class="raj-caveats" id="percept-caveat"></div>
 </section>
+
 <section id="fusion" data-toc="Fusing the senses" data-order="140" data-tier="act2" class="section">
   <h2 id="fusion-title"></h2>
   <p class="lead" id="fusion-sub"></p>
@@ -447,6 +437,7 @@
     </div>
   </div>
 </section>
+
 <section id="ablation" data-toc="Interventions" data-order="60" data-tier="act1" class="section alt">
   <h2>Test which model units matter</h2>
   <p class="lead">Disable selected units, repeat the task, and compare the change with a random-unit control. Restore the model after the intervention.</p>
@@ -464,6 +455,7 @@
     </div>
   </div>
 </section>
+
 <section id="scaling" data-toc="Bigger models" data-order="70" data-tier="act1" class="section alt">
   <h2>Does a stronger AI model predict the brain better?</h2>
   <p class="lead">Compare models within each task. Rankings depend on the dataset, readout, and training objective; model size alone does not determine brain alignment.</p>
@@ -473,12 +465,14 @@
     <p class="reading" id="scaling-reading"></p>
   </div>
 </section>
+
 <section id="gemma-scorecard" data-toc="Gemma scorecard" data-order="170" data-tier="act2" class="section">
   <h2 id="gsc-title"></h2>
   <p class="lead" id="gsc-sub"></p>
   <table class="nulls-table" id="gsc-table"></table>
   <p class="reading" id="gsc-reading"></p>
 </section>
+
 <section id="layercontrib" data-toc="Where signal lives" data-order="190" data-tier="act2" class="section alt">
   <h2 id="lc-title"></h2>
   <p class="lead" id="lc-sub"></p>
@@ -490,6 +484,7 @@
     </div>
   </div>
 </section>
+
 <section id="mechanics" data-toc="Inside one test" data-order="200" data-tier="act2" class="section">
   <h2 id="mech-title"></h2>
   <p class="lead" id="mech-sub"></p>
@@ -512,11 +507,13 @@
   </div>
   <p class="reading" id="allpaths-reading"></p>
 </section>
+
 <section id="models" data-toc="The models" data-order="210" data-tier="act2" class="section">
   <h2 id="models-title"></h2>
   <p class="lead" id="models-sub"></p>
   <div class="model-grid" id="model-grid"></div>
 </section>
+
 <section id="nulls" data-toc="Null baselines" data-order="180" data-tier="act2" class="section alt">
   <h2>Check against a control</h2>
   <p class="lead">Compare results with shuffled inputs, random features, or random actions. A control helps identify what the score measures.</p>
@@ -530,20 +527,48 @@
   </div>
   <table class="nulls-table" id="nulls-table" style="margin-top:24px"></table>
 </section>
+
 <section id="limitations" data-toc="What to keep in mind" data-order="300" data-tier="always" class="section">
   <h2 id="lim-title">How to read these examples</h2>
   <p class="lead">Each experiment has a defined scope. Score scales differ, small gaps may be uncertain, and a working demo does not establish general performance.</p>
   <ul class="lim-list" id="lim-list"></ul>
 </section>
-</div>
-  <section id="partners" class="partner">
-    <h2>Bring your next experiment.</h2>
-    <p>We’re looking for research and robotics partners to connect a model, add a measurement, or validate a policy integration.</p>
-    <div class="builder-links"><a href="architecture.html">Explore the interface</a><a href="https://github.com/brain-score/unified">View the code</a></div>
-  </section>
-  <noscript><p>Interactive figures need JavaScript. The <a href="assets/results/provenance.json">data provenance</a> and <a href="experiments.html">experiment archive</a> remain available.</p></noscript>
-<div hidden aria-hidden="true"><span id="hero-sub"></span><span id="hero-note"></span><span id="provenance"></span></div>
-</main>
-<footer class="footer"><div class="footer-inner"><span>Brain-Score · Unified Model Interface</span><span><a href="RESULT_TEMPLATE.md">Result template</a> · <a href="assets/results/provenance.json">Data provenance</a></span></div></footer>
+
+<section id="robotics" data-toc="Robotics" data-order="75" data-tier="always" class="section">
+  <h2>Bring robotics experiments into the same toolbox</h2>
+  <p class="lead">Study what a policy observes, the actions it proposes, and how interventions change those actions.</p>
+  <div class="cap-grid">
+    <div class="cap-card"><h3>Replay a recorded task</h3><p>Use camera frames, robot state, and instructions from a DROID episode.</p></div>
+    <div class="cap-card"><h3>Inspect a policy</h3><p>Record actions and supported internal activity. Compare the same observation before and after an intervention.</p></div>
+    <div class="cap-card"><h3>Build with a robotics partner</h3><p>A real 119-step DROID episode passed recording and replay with an untrained test policy. Trained policies and physical robot control still need validation.</p></div>
+  </div>
+</section>
+<section id="partners" data-toc="Build with us" data-order="280" data-tier="always" class="section alt">
+  <h2>Build the next research tool with us</h2>
+  <p class="lead">Bring a model, an experiment, or a robotics policy. Help make it usable by other researchers.</p>
+  <ul><li><b>Researchers:</b> add a measurement, trace analysis, or intervention.</li>
+  <li><b>Robotics teams:</b> validate a recorded task and its observation/action definitions.</li>
+  <li><b>Engineers:</b> build an integration through the public extension APIs and tell us where the guide falls short.</li></ul>
+  <p><a href="architecture.html">Explore the technical design</a> · <a href="https://github.com/brain-score/unified">View the code</a></p>
+</section>
+
+<footer class="footer">
+  <div>
+    <b>Start with one experiment.</b> Explore the code and choose an integration to build.
+  </div>
+  <div class="cta-row">
+    <a class="cta-btn" href="https://www.brain-score.org" target="_blank" rel="noopener">Live leaderboard &amp; submit a model →</a>
+    <a class="cta-btn" href="https://github.com/brain-score" target="_blank" rel="noopener">Code on GitHub →</a>
+    <a class="cta-btn" href="architecture.html">How it works →</a>
+  </div>
+  <div class="muted small" id="provenance"></div>
+</footer>
+
+<script src="figures.js?v=20260916.1"></script>
+<script src="data.js?v=20260916.1"></script>
+<script src="app.js?v=20260916.1"></script>
+<script src="model_moves.js?v=2"></script>
+<script src="game.js?v=2"></script>
+<script src="audience.js?v=20260916.1"></script>
 </body>
 </html>

@@ -1,0 +1,25 @@
+.view-description {color:var(--muted);font-size:.9rem;max-width:780px;margin:0 0 22px}
+.executive-panel>h2,.technical-body>h2 {font-size:clamp(1.55rem,2.6vw,2.2rem);line-height:1.15;letter-spacing:-.035em;margin:0 0 16px}
+.executive-caption {font-size:1rem;line-height:1.7;max-width:870px;color:var(--muted);margin:0 0 28px}
+.full-experiment {display:inline-block;font-size:.85rem;font-weight:600;margin-top:18px}
+body[data-aud=executive] .executive-panel .figure-hint {display:none}
+body[data-aud=executive] .executive-panel .mb-grid {display:flex;flex-direction:column;gap:20px}
+body[data-aud=executive] .executive-panel .mb-brain-col {display:grid;grid-template-columns:1fr 1fr;gap:14px;order:0}
+body[data-aud=executive] .executive-panel #mb-tabs {grid-column:1/-1;order:-1}
+body[data-aud=executive] .executive-panel .mb-left {order:1}
+body[data-aud=executive] .executive-panel .mb-stim-card,
+body[data-aud=executive] .executive-panel #mb-transcript,
+body[data-aud=executive] .executive-panel #mb-rnow,
+body[data-aud=executive] .executive-panel .mb-left>p,
+body[data-aud=executive] .executive-panel .mb-video-fig>figcaption {display:none}
+body[data-aud=executive] .executive-panel .mb-video-fig {border:0;padding:0;margin:0}
+body[data-aud=executive] .executive-panel .mb-scrub-row {max-width:600px;margin:0 auto 10px}
+body[data-aud=executive] .executive-panel .mb-brain-fig img {max-height:300px;object-fit:contain}
+body[data-aud=executive] .executive-panel #mb-rcurve {height:180px!important}
+body[data-aud=executive] .executive-panel .result-visual {max-width:100%}
+body[data-aud=executive] .result-index {padding:18px 0}
+body[data-aud=executive] .result-index a {font-size:.85rem}
+@media(max-width:700px){.executive-caption {font-size:.94rem;line-height:1.65;margin-bottom:22px}.executive-panel .mb-brain-col {grid-template-columns:1fr!important}.executive-panel>h2 {font-size:1.65rem}.executive-panel .figure-key {line-height:1.55}}
+body[data-aud=executive] .executive-panel .mb-grid {align-items:stretch}
+body[data-aud=executive] .executive-panel .mb-left {width:100%;max-width:680px;align-self:center}
+body[data-aud=executive] .executive-panel .mb-scrub-row input {min-width:160px}
