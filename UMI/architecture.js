@@ -519,6 +519,7 @@
     const flow = $('#arch-flow'); flow.innerHTML = '';
     result.steps.forEach((st, i) => {
       const box = el('div', 'flow-box ' + st.kind);
+      box.dataset.kindLabel = ({event:'Input',check:'Check',decision:'Decision',fn:'Model call',wrapper:'Feature extraction',output:'Output',error:'Error'})[st.kind] || st.kind;
       box.innerHTML = `<div class="fb-label">${st.label}</div>` +
         (st.sub ? `<div class="fb-sub">${st.sub}</div>` : '') +
         (st.contract ? `<div class="fb-contract">${st.contract}</div>` : '');
@@ -550,12 +551,11 @@
     let html = '<table class="arch-mtx"><thead><tr><th></th>';
     INPUTS.forEach(i => html += `<th>${i.name}</th>`);
     html += '</tr></thead><tbody>';
-    // green = routes; green + ◐ = partial (only part of a multimodal input); green + * = not
-    // out-of-the-box (adapter or wired capability). amber = CompatibilityError, grey = NotImplementedError.
-    const clsFor = c => c.tier === 'na' ? (c.etype === 'CompatibilityError' ? 'cm-compat' : 'cm-na') : 'cm-ok';
+    // Text and color distinguish full routes, partial input, setup, and errors.
+    const clsFor = c => c.tier === 'na' ? (c.etype === 'CompatibilityError' ? 'cm-compat' : 'cm-na') : c.tier === 'partial' ? 'cm-partial' : c.tier === 'optin' ? 'cm-optin' : 'cm-ok';
     const markFor = c => c.tier === 'optin' ? '<span class="mtx-star">*</span>'
       : (c.tier === 'partial' ? '<span class="mtx-part">◐</span>' : '');
-    const textFor = c => c.tier === 'na' ? c.etype : c.out.replace(' (multi-tower)', '') + markFor(c);
+    const textFor = c => c.tier === 'na' ? c.etype : (c.tier === 'partial' ? 'Partial: ' : c.tier === 'optin' ? 'Setup: ' : 'Ready: ') + c.out.replace(' (multi-tower)', '') + markFor(c);
     const tipFor = c => c.tier === 'routes' ? `routes today → ${c.out}${c.via ? ' (' + c.via + ')' : ''}`
       : c.tier === 'partial' ? `partial — ${c.need}`
       : c.tier === 'optin' ? `not out-of-the-box — ${c.need}`
@@ -581,6 +581,10 @@
     html += '</tbody></table>';
     wrap.innerHTML = html;
     wrap.querySelectorAll('td[data-m]').forEach(td => {
+      td.tabIndex = 0;
+      td.setAttribute('role', 'button');
+      td.setAttribute('aria-label', MODELS.find(m => m.id === td.dataset.m).name + ', ' + INPUTS.find(i => i.id === td.dataset.i).name + ': ' + td.textContent);
+      td.onkeydown = event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); td.click(); } };
       td.onclick = () => {
         state.model = td.dataset.m; state.input = td.dataset.i;
         const inp = INPUTS.find(i => i.id === state.input);

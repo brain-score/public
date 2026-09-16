@@ -87,15 +87,12 @@
 
   // ---- capability cards ----
   const CAPS = [
-    ['Predicting brain activity', 'Turn the model’s internal features into a prediction of real brain activity (in vision areas, the language network, or across the whole brain) and check it against actual recordings.'],
-    ['Matching human behavior', 'Have the model make the same kind of choice a person would (e.g. “real word or fake?”) and score how closely its pattern of right and wrong answers matches theirs.'],
-    ['Switching neurons off', 'Turn off a chosen group of the model’s neurons, watch what breaks, then switch them back on exactly. This is how we give a model “dyslexia” further down.'],
-    ['Acting in a world', 'Close the loop: the model sees a scene, makes a move, the world responds, repeat (a built-in grid-game test).'],
-    ['Models talking to models', 'One model’s reply becomes the next model’s input, with no special glue code, so you can study models interacting.'],
-    ['Lining the senses up in time', 'Stitch features from picture, sound, and words onto the brain’s own clock, so they can be compared moment by moment.'],
-    ['Matching layers to brain areas', 'Find which of the model’s internal layers best matches each brain area: one layer, the whole brain, or a hand-picked mix across layers.'],
-    ['Brain-like layout', 'Score whether the model’s neurons are arranged in space like the brain’s, not just whether they compute the same thing.'],
-    ['Cortical visualizations', 'Project any of these scores onto an inflated cortical surface, as they appear in published papers.'],
+    ['Compare with brain activity', 'Test how well model features predict recorded responses to images, text, audio, or video.'],
+    ['Compare with human behavior', 'Give models and people the same task. Compare their choices and errors.'],
+    ['Run interventions', 'Change selected model units and measure the effect on the same task.'],
+    ['Inspect and replay experiments', 'Capture inputs, outputs, and available internal activity. Analyze saved responses without another model call.'],
+    ['Study perception and action', 'Connect observations to actions in a session. Robotics integrations need their own policy and control checks.'],
+    ['Add your own tool', 'Build a measurement, observer, or domain integration in your own package through public APIs.'],
   ];
   $('cap-grid').innerHTML = CAPS.map(([t, d]) =>
     `<div class="cap-card"><div class="tag">capability</div><h3>${t}</h3>
@@ -138,17 +135,16 @@
     // is hidden rather than filled with a stand-in.
     const img = $('cortex-img');
     const figure = img && img.closest('figure');
-    if (inp.cortex) {
+    if (inp.cortex && inp.cortex_measured) {
       img.src = 'assets/' + inp.cortex + '?v=' + (window.ASSET_V || '3');
       if (figure) figure.style.display = '';
       // A measured map and a schematic make DIFFERENT claims, so they must not wear
       // the same badge: one is a result, the other is anatomy.
       const badge = figure && figure.querySelector('.illus-badge');
-      if (badge) badge.textContent = inp.cortex_measured ? 'measured' : 'illustrative';
+      if (badge) badge.textContent = 'prediction accuracy';
+      img.alt = 'Per-voxel prediction correlation for ' + inp.scored_with;
       const cap = $('cortex-cap');
-      if (cap) cap.textContent = inp.cortex_measured
-        ? `Measured, not a schematic: each vertex is coloured by how well ${inp.scored_with} predicted that spot in the brain (per-voxel correlation). Grey means the benchmark did not score there.`
-        : 'A schematic of where this kind of input drives activity, not a result. Inputs scored on behavior rather than on predicting the brain show no map at all.';
+      if (cap) cap.textContent = `Prediction accuracy for ${inp.scored_with}: per-voxel correlation, not response amplitude. Grey marks unscored locations.`;
     } else if (figure) {
       figure.style.display = 'none';
     }
@@ -200,7 +196,7 @@
     };
     const lay = Object.assign({}, LAYOUT, {
       margin: { l: 44, r: 16, t: 10, b: 70 },
-      yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'real-vs-fake-word accuracy', range: [0.45, 0.75] }),
+      yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'Word-decision score (human-normalized)', range: [0, Math.ceil((Math.max(1, ...m.floors.map(f => f.value)) + 0.1) * 10) / 10] }),
     });
     Plotly.react('mech-floors-plot', [bar], lay, CFG);
   }
@@ -212,31 +208,40 @@
     $('allpaths-sub').textContent = ap.subtitle;
     setReading('allpaths-reading', ap.reading);
     // friendly display names for the three ways a model can answer
-    const pathName = { 'readout': 'read its features', 'generation': 'write an answer',
-      'instr-readout': 'features after thinking' };
+    const pathName = { 'readout': 'Read internal activity', 'generation': 'Use the model’s output',
+      'instr-readout': 'Read activity with instructions' };
     const pn = p => pathName[p] || p;
     // one trace per path (colour = path), points at x=model, y=score
     const traces = Object.keys(ap.pathColors).map(path => {
       const rows = ap.rows.filter(r => r.path === path && r.score != null);
       return {
-        x: rows.map(r => r.model), y: rows.map(r => r.score),
+        x: rows.map(r => {
+          const paired = rows.filter(other => other.model === r.model);
+          return ap.models.indexOf(r.model) + (paired.length > 1 ? (paired.indexOf(r) - (paired.length - 1) / 2) * 0.4 : 0);
+        }), y: rows.map(r => r.score), customdata: rows.map(r => r.model),
         text: rows.map(r => r.input), type: 'scatter', mode: 'markers', name: pn(path),
         marker: { color: ap.pathColors[path], size: 15, line: { color: '#0a0e17', width: 1 } },
-        hovertemplate: '%{x} · %{text} · ' + pn(path) + ': %{y:.2f}<extra></extra>',
+        hovertemplate: '%{customdata} · %{text} · ' + pn(path) + ': %{y:.3f}<extra></extra>',
       };
     });
     const lay = Object.assign({}, LAYOUT, {
       showlegend: true,
       legend: { orientation: 'h', x: 0, y: 1.12, font: { size: 10 }, bgcolor: 'rgba(0,0,0,0)' },
-      yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'real-vs-fake-word accuracy', range: [0.42, 1.08] }),
-      xaxis: Object.assign({}, LAYOUT.xaxis, { categoryorder: 'array', categoryarray: ap.models,
-        title: 'model' }),
+      yaxis: Object.assign({}, LAYOUT.yaxis, { title: 'Word-decision score (human-normalized)', dtick: 0.2,
+        range: [0, Math.ceil((Math.max(1, ...ap.rows.filter(r => r.score != null).map(r => r.score)) + 0.1) * 10) / 10] }),
+      xaxis: Object.assign({}, LAYOUT.xaxis, { type: 'linear', tickmode: 'array',
+        tickvals: ap.models.map((_, i) => i), ticktext: ap.models,
+        range: [-0.5, ap.models.length - 0.5], title: 'model' }),
       shapes: [
+        { type: 'line', x0: -0.5, x1: ap.models.length - 0.5, y0: 1, y1: 1,
+          line: { color: '#167b78', width: 1.5, dash: 'dash' } },
         { type: 'line', x0: -0.5, x1: ap.models.length - 0.5, y0: ap.chance, y1: ap.chance,
           line: { color: '#888', width: 1, dash: 'dot' } },
         { type: 'line', x0: -0.5, x1: ap.models.length - 0.5, y0: ap.null_floor, y1: ap.null_floor,
           line: { color: '#d8483b', width: 1, dash: 'dot' } }],
       annotations: [
+        { x: 0, y: 1, yanchor: 'bottom', xanchor: 'left',
+          text: 'Human reference (1.0)', showarrow: false, font: { color: '#167b78', size: 10 } },
         { x: ap.models.length - 1, y: ap.chance, yanchor: 'top', xanchor: 'right',
           text: 'chance', showarrow: false, font: { color: '#888', size: 10 } },
         { x: ap.models.length - 1, y: ap.null_floor, yanchor: 'bottom', xanchor: 'right',
@@ -245,7 +250,7 @@
     Plotly.react('allpaths-plot', traces, lay, CFG);
     // table
     const fmt = (r) => `<tr><td>${r.model}</td><td>${r.input}</td>`
-      + `<td><span class="path-chip" style="background:${ap.pathColors[r.path] || '#666'}">${pn(r.path)}</span></td>`
+      + `<td><span class="path-chip" style="background:${window.UMI_FIGURE_COLOR ? window.UMI_FIGURE_COLOR(ap.pathColors[r.path] || '#666') : ap.pathColors[r.path] || '#666'}">${pn(r.path)}</span></td>`
       + `<td>${r.score == null ? '—' : r.score.toFixed(3)}</td></tr>`;
     $('allpaths-table').innerHTML =
       '<tr><th>model</th><th>shown</th><th>how it answered</th><th>score</th></tr>'
@@ -687,7 +692,7 @@
     const tb = $('fusion-table');
     if (tb) tb.innerHTML = '<tr><th>where the features come from</th><th>how the senses combine</th><th># features</th><th>raw correlation</th><th>time to run (min)</th></tr>' +
       fc.bars.map(b => `<tr><td>${b.name}</td>`
-        + `<td><span class="path-chip" style="background:${kindColor[b.kind] || '#9aa0a6'}">${b.fusion || b.kind}</span></td>`
+        + `<td><span class="path-chip" style="background:${window.UMI_FIGURE_COLOR ? window.UMI_FIGURE_COLOR(kindColor[b.kind] || '#9aa0a6') : kindColor[b.kind] || '#9aa0a6'}">${b.fusion || b.kind}</span></td>`
         + `<td>${b.dim != null ? b.dim.toLocaleString() : '—'}</td><td>${b.r.toFixed(3)}</td>`
         + `<td class="muted">${b.extract_min != null ? b.extract_min.toFixed(1) : '—'}</td></tr>`).join('');
 
@@ -781,7 +786,7 @@
         const pct = Math.max(0, Math.min(100, (r / 0.5) * 100));   // bar scaled to r∈[0,0.5]
         rEl.innerHTML =
           `<div class="mb-rnow-lab">how well the two brains match, right now ` +
-          `<span class="mb-rnow-sub">(raw correlation; 0 = chance)</span></div>` +
+          `<span class="mb-rnow-sub">(spatial correlation)</span></div>` +
           `<div class="mb-rnow-bar"><span style="width:${pct}%"></span></div>` +
           `<div class="mb-rnow-val">match = ${r.toFixed(2)}` +
           (active.mean_r ? ` <span class="mb-rnow-sub">· whole-clip average ${active.mean_r.toFixed(2)}</span>` : '') +
@@ -861,7 +866,7 @@
     setReading('witness-reading', w.reading);
     $('witness-modes').innerHTML = w.modes.map(m => `<span class="wmode">${m}</span>`).join('');
     $('witness-grid').innerHTML = w.panels.map(p =>
-      `<figure class="witness-card"><img src="${p.img}?v=1" alt="witness panel" />` +
+      `<figure class="witness-card"><img src="${p.img}?v=1" alt="${p.caption}" />` +
       `<figcaption>${p.caption}</figcaption></figure>`).join('');
   }
 
@@ -951,7 +956,7 @@
     $('raj-table').innerHTML =
       '<tr><th>model</th><th>how asked</th><th>accuracy</th><th>% chose left</th><th>match-to-human (raw i2n)</th></tr>' +
       raj.rows.map(r => `<tr><td>${r.model}</td>`
-        + `<td><span class="path-chip" style="background:${raj.kindColors[r.kind] || '#888'}">${r.mode}</span></td>`
+        + `<td><span class="path-chip" style="background:${window.UMI_FIGURE_COLOR ? window.UMI_FIGURE_COLOR(raj.kindColors[r.kind] || '#888') : raj.kindColors[r.kind] || '#888'}">${r.mode}</span></td>`
         + `<td>${r.acc.toFixed(3)}</td><td>${r.frac_left == null ? '—' : r.frac_left.toFixed(2)}</td>`
         + `<td><b>${r.i2n.toFixed(3)}</b></td></tr>`).join('');
     $('raj-findings').innerHTML = raj.findings.map(f => `<div class="raj-finding">${f}</div>`).join('');

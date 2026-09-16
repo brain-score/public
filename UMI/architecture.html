@@ -4,27 +4,27 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Architecture · Brain-Score Unified Model Interface</title>
-<link rel="stylesheet" href="style.css?v=19" />
+<link rel="stylesheet" href="style.css?v=20260916.1" />
 <link rel="stylesheet" href="architecture.css?v=10" />
+<link rel="stylesheet" href="theme.css?v=20260916.1">
 </head>
 <body class="arch-body">
-<nav class="nav">
-  <div class="brand">Brain-Score<span class="dot">·</span><span class="muted">Unified</span></div>
-  <div class="aud-bar">
-    <a class="aud-btn" href="index.html">Home</a>
-    <a class="aud-btn" href="overview.html">Overview</a>
-    <span class="aud-btn active">Architecture</span>
+<nav class="site-nav" aria-label="Main navigation">
+  <a class="brand" href="index.html">Brain-Score / UMI</a>
+  <div class="nav-actions">
+    <a href="index.html">Home</a>
+    <a href="overview.html">Overview</a>
+    <a href="architecture.html" aria-current="page">Architecture</a>
+
   </div>
 </nav>
 
 <header class="hero arch-hero">
   <div class="hero-inner">
-    <h1>The architecture, end to end.</h1>
-    <p class="sub">Every subject registers once and is evaluated through a single method —
-      <code>interact(session)</code>. A subject exchanges timestamped events over named channels, and
-      a channel registry documents every allowable input and output. This page draws out the full
-      contract and the exact routing. Pick a subject and an input below and watch Brain-Score resolve
-      the channels, the output, and any pre-flight failure.</p>
+    <p class="eyebrow">Interface and extension points</p>
+    <h1>Connect a model. Build an experiment.</h1>
+    <p class="sub">Explore how inputs reach a model and how results return. Choose a model and task to see the route, the required integration, and any limits.</p>
+    <p class="diagram-note">Interactive contract diagram · explains routing; does not run a model.</p>
   </div>
 </header>
 
@@ -62,6 +62,13 @@
 
       <div class="arch-output">
         <div class="arch-verdict" id="arch-verdict"></div>
+        <div class="figure-key flow-key" aria-label="Routing diagram legend">
+          <span><i class="key-swatch" style="--key-color:#285ee8"></i>Input event</span>
+          <span><i class="key-swatch" style="--key-color:#a36516"></i>Check / decision</span>
+          <span><i class="key-swatch" style="--key-color:#7653a6"></i>Model processing</span>
+          <span><i class="key-swatch" style="--key-color:#167b78"></i>Output</span>
+          <span><i class="key-swatch" style="--key-color:#c45132"></i>Routing error</span>
+        </div>
         <div class="arch-flow" id="arch-flow"></div>
         <div class="arch-metabox" id="arch-meta"></div>
         <div class="arch-codebox">
@@ -78,15 +85,21 @@
     <p class="lead">Every subject archetype against every input channel. Each perceptual cell shows both
       outputs it can produce: a <code>NeuroidAssembly</code> on top (the <code>neural</code> channel) and a
       <code>BehavioralAssembly</code> below (the <code>behavior</code> channel). This is what the <b>router</b> can do — not just what today's
-      registrations happen to wire. <b class="mtx-key ok">Green</b> runs out of the box (native modality, full input).
+      registrations happen to wire. <b class="mtx-key ok">Ready</b> runs out of the box (native modality, full input).
       <span class="mtx-part">◐</span> is <b>partial</b> — the subject routes but on only part of a
       multimodal input (e.g. only the video track of a movie), not the full multimodal benchmark.
       <span class="mtx-star">*</span> is <b>not out-of-the-box</b>: it needs an adapter (the
       still↔video frame trick) or a wired harness (a state-change handler, a policy) — effort ranges from a small hook to a real modeling project.
-      <b class="mtx-key compat">CompatibilityError</b> (amber) and
-      <b class="mtx-key na">NotImplementedError</b> (grey) are genuine limits; the cell names the
+      <b class="mtx-key compat">CompatibilityError</b> and
+      <b class="mtx-key na">NotImplementedError</b> are genuine limits; the cell names the
       exact exception. Click any cell to load it into the router above.</p>
-    <div class="arch-matrix-wrap" id="arch-matrix"></div>
+    <div class="figure-key matrix-key" aria-label="Routing matrix legend">
+      <span class="cm-ok">Ready: full input supported</span><span class="cm-partial">Partial: uses some channels</span>
+      <span class="cm-optin">Setup needed: adapter or harness</span><span class="cm-compat">Incompatible input</span>
+      <span class="cm-na">Not implemented</span>
+    </div>
+    <p class="diagram-note">Each cell lists neural output first, then behavior. Select a cell to explore its route. On a phone, scroll the table horizontally.</p>
+    <div class="arch-matrix-wrap" id="arch-matrix" tabindex="0" aria-label="Routing matrix, scroll horizontally"></div>
     <p class="muted small">Examples: a lesion (a <code>StateChange</code> on the <code>lesion:</code> channel) is <span class="mtx-star">*</span> on any
       <i>white-box</i> subject — a small state-change handler (forward-hook ablation on a hookable
       layer). An image subject on video, or a video subject on stills, is <span class="mtx-star">*</span> too:
@@ -405,6 +418,6 @@ unified/brainscore/                   # everything built on the interface
   </footer>
 </main>
 
-<script src="architecture.js?v=12"></script>
+<script src="architecture.js?v=20260916.1"></script>
 </body>
 </html>
